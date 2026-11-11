@@ -1,4 +1,4 @@
-"""Main application window."""
+"""Main application window: the input tab and one tab per kind of analysis."""
 
 from __future__ import annotations
 
@@ -12,19 +12,18 @@ from PySide6.QtGui import (
     QDesktopServices,
     QKeySequence,
 )
-from PySide6.QtWidgets import (
-    QMainWindow,
-    QMessageBox,
-    QPushButton,
-    QVBoxLayout,
-    QWidget,
-)
+from PySide6.QtWidgets import QMainWindow, QMessageBox
 
 from masterRebuild import appConfig
+from masterRebuild.models.legacyProgram import BSINUS, DEPLACE, FRICTION, NSINUS, RAYON, SINUS
+from masterRebuild.models.strandPresets import allPresets
 from masterRebuild.services import themeService
 from masterRebuild.services.manualWorker import ManualWorker
 from masterRebuild.ui.dialogs.aboutDialog import showAbout
 from masterRebuild.ui.dialogs.errorDialog import showError
+from masterRebuild.ui.views.analysisView import AnalysisView
+from masterRebuild.ui.views.inputView import InputView
+from masterRebuild.ui.widgets.fullWidthTabWidget import FullWidthTabWidget
 from masterRebuild.ui.widgets.reportingView import ReportingView
 
 
@@ -35,48 +34,71 @@ class MainWindow(QMainWindow):
         self.resize(appConfig.defaultWindowWidth, appConfig.defaultWindowHeight)
         self.manualWorker: ManualWorker | None = None
 
+        self.inputView = InputView()
+        provider = self.inputView.currentInput
+        self.sinusoidView = AnalysisView((SINUS, BSINUS, NSINUS), provider)
+        self.curvatureView = AnalysisView((RAYON,), provider)
+        self.frictionView = AnalysisView((FRICTION,), provider)
+        self.displacementView = AnalysisView((DEPLACE,), provider)
+        self.analysisViews = (
+            self.sinusoidView,
+            self.curvatureView,
+            self.frictionView,
+            self.displacementView,
+        )
+
+        self.tabs = FullWidthTabWidget()
+        self.tabs.setObjectName("programTabs")
+        self.tabs.addTab(self.inputView, "Input · ENTRE")
+        self.tabs.addTab(self.sinusoidView, "Sinusoid · SINUS BSINUS NSINUS")
+        self.tabs.addTab(self.curvatureView, "Constant Curvature · RAYON")
+        self.tabs.addTab(self.frictionView, "Friction · FRICTION")
+        self.tabs.addTab(self.displacementView, "Displacement · DEPLACE")
+        self.tabs.currentChanged.connect(self.onTabChanged)
+        self.setCentralWidget(self.tabs)
+
+        for view in (self.inputView, *self.analysisViews):
+            self.connectView(view)
+        for view in self.analysisViews:
+            self.inputView.inputChanged.connect(view.markInputsChanged)
+
         self.buildMenuBar()
-        self.showStatus("Ready")
-
-        self.greetButton = QPushButton("Say Hello")
-        self.greetButton.clicked.connect(self.onGreetClicked)
-
-        centralWidget = QWidget()
-        layout = QVBoxLayout(centralWidget)
-        layout.addWidget(self.greetButton)
-        layout.addStretch()
-
-        self.setCentralWidget(centralWidget)
+        self.onTabChanged()
+        self.showStatus("Ready. The 1991 example strand is loaded; press F5 on a program tab.")
 
     def buildMenuBar(self) -> None:
         # Menus are kept as attributes: features can extend them later, and it
         # prevents the Python wrappers from being garbage-collected.
         fileMenu = self.fileMenu = self.menuBar().addMenu("&File")
-
-        self.newAction = QAction("&New", self)
-        self.newAction.setShortcut(QKeySequence.StandardKey.New)
-        self.newAction.triggered.connect(self.onFileNew)
-        fileMenu.addAction(self.newAction)
-
-        self.openAction = QAction("&Open...", self)
-        self.openAction.setShortcut(QKeySequence.StandardKey.Open)
-        self.openAction.triggered.connect(self.onFileOpen)
-        fileMenu.addAction(self.openAction)
-
-        self.saveAction = QAction("&Save", self)
-        self.saveAction.setShortcut(QKeySequence.StandardKey.Save)
-        self.saveAction.triggered.connect(self.onFileSave)
-        fileMenu.addAction(self.saveAction)
-
+        self.openAction = self.makeAction(
+            fileMenu, "&Open ENTRE.DAT...", self.inputView.openFile, QKeySequence.StandardKey.Open
+        )
+        self.saveAction = self.makeAction(
+            fileMenu,
+            "&Save ENTRE.DAT As...",
+            self.inputView.saveFile,
+            QKeySequence.StandardKey.Save,
+        )
+        self.examplesMenu = fileMenu.addMenu("Load &Example")
+        for preset in allPresets:
+            self.makeAction(self.examplesMenu, preset.name, partial(self.loadPreset, preset))
         fileMenu.addSeparator()
+        self.exportLegacyAction = self.makeAction(
+            fileMenu, "Export &Legacy Files...", self.exportLegacyFiles, QKeySequence("Ctrl+E")
+        )
+        self.exportCsvAction = self.makeAction(fileMenu, "Export &CSV...", self.exportCsv)
+        fileMenu.addSeparator()
+        self.exitAction = self.makeAction(fileMenu, "E&xit", self.close, QKeySequence("Ctrl+Q"))
 
-        self.exitAction = QAction("E&xit", self)
-        self.exitAction.setShortcut(QKeySequence("Ctrl+Q"))
-        self.exitAction.triggered.connect(self.close)
-        fileMenu.addAction(self.exitAction)
+        runMenu = self.runMenu = self.menuBar().addMenu("&Run")
+        self.runAction = self.makeAction(
+            runMenu, "&Run Current Program", self.runCurrent, QKeySequence("F5")
+        )
+        self.stopAction = self.makeAction(
+            runMenu, "&Stop", self.stopCurrent, QKeySequence("Shift+F5")
+        )
 
         helpMenu = self.helpMenu = self.menuBar().addMenu("&Help")
-
         self.themeMenu = helpMenu.addMenu("&Theme")
         self.themeGroup = QActionGroup(self)
         self.themeGroup.setExclusive(True)
@@ -90,23 +112,28 @@ class MainWindow(QMainWindow):
             self.themeGroup.addAction(action)
             self.themeMenu.addAction(action)
             self.themeActions[theme] = action
-
         helpMenu.addSeparator()
+        self.manualAction = self.makeAction(
+            helpMenu, "User &Manual...", self.onHelpManual, QKeySequence.StandardKey.HelpContents
+        )  # F1
+        self.sourcesAction = self.makeAction(
+            helpMenu, "Legacy Fortran &Sources...", self.onOpenLegacySources
+        )
+        self.aboutAction = self.makeAction(helpMenu, "&About", self.onHelpAbout)
 
-        self.manualAction = QAction("User &Manual...", self)
-        self.manualAction.setShortcut(QKeySequence.StandardKey.HelpContents)  # F1
-        self.manualAction.triggered.connect(self.onHelpManual)
-        helpMenu.addAction(self.manualAction)
-
-        self.aboutAction = QAction("&About", self)
-        self.aboutAction.triggered.connect(self.onHelpAbout)
-        helpMenu.addAction(self.aboutAction)
+    def makeAction(self, menu, text: str, slot, shortcut=None) -> QAction:
+        action = QAction(text, self)
+        if shortcut is not None:
+            action.setShortcut(shortcut)
+        action.triggered.connect(slot)
+        menu.addAction(action)
+        return action
 
     def connectView(self, view: ReportingView) -> None:
         """Wire a view's status and failures into this window.
 
-        Call this for every view you add. Status goes to the bar, failures go
-        to a dialog, and the view is spared knowing which is which.
+        Status goes to the bar, failures go to a dialog, and the view is spared
+        knowing which is which.
         """
         view.statusMessage.connect(self.showStatus)
         view.errorMessage.connect(self.showError)
@@ -118,6 +145,55 @@ class MainWindow(QMainWindow):
         """Kept a method so tests can watch for it without a dialog opening."""
         showError(self, title, message)
 
+    # -- tabs and runs ------------------------------------------------------------
+
+    def currentAnalysis(self) -> AnalysisView | None:
+        widget = self.tabs.currentWidget()
+        return widget if isinstance(widget, AnalysisView) else None
+
+    def onTabChanged(self, _index: int = 0) -> None:
+        onAnalysis = self.currentAnalysis() is not None
+        for action in (
+            self.runAction,
+            self.stopAction,
+            self.exportLegacyAction,
+            self.exportCsvAction,
+        ):
+            action.setEnabled(onAnalysis)
+
+    def runCurrent(self) -> None:
+        view = self.currentAnalysis()
+        if view is None:
+            self.showStatus("Choose a program tab, then run it.")
+            return
+        view.run()
+
+    def stopCurrent(self) -> None:
+        view = self.currentAnalysis()
+        if view is not None:
+            view.stop()
+
+    def exportLegacyFiles(self) -> None:
+        view = self.currentAnalysis()
+        if view is not None and view.output is not None:
+            view.exportLegacyFiles()
+        else:
+            self.showStatus("Run the program first; then its files can be exported.")
+
+    def exportCsv(self) -> None:
+        view = self.currentAnalysis()
+        if view is not None and view.output is not None:
+            view.exportCsv()
+        else:
+            self.showStatus("Run the program first; then its results can be exported.")
+
+    def loadPreset(self, preset) -> None:
+        self.inputView.presetCombo.setCurrentIndex(allPresets.index(preset))
+        self.inputView.onLoadPreset()
+        self.tabs.setCurrentWidget(self.inputView)
+
+    # -- help -----------------------------------------------------------------
+
     def onThemeChosen(self, theme: str) -> None:
         themeService.saveTheme(theme)
         themeService.applyTheme(theme)
@@ -126,15 +202,14 @@ class MainWindow(QMainWindow):
         else:
             self.showStatus(f"{theme.capitalize()} theme applied.")
 
-    # Placeholder slots — replace the bodies with your app's file handling.
-    def onFileNew(self) -> None:
-        self.showStatus("File > New selected")
-
-    def onFileOpen(self) -> None:
-        self.showStatus("File > Open selected")
-
-    def onFileSave(self) -> None:
-        self.showStatus("File > Save selected")
+    def onOpenLegacySources(self) -> None:
+        folder = appConfig.legacySourcesDir
+        if folder.is_dir() and QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder))):
+            self.showStatus(f"Opening {folder}")
+            return
+        QMessageBox.information(
+            self, "Legacy Fortran Sources", f"The original .FOR and .EXE files are in:\n\n{folder}"
+        )
 
     def onHelpManual(self) -> None:
         """Open the manual, preferring the published copy when there is one.
@@ -142,8 +217,8 @@ class MainWindow(QMainWindow):
         Whether it is reachable has to be asked separately: openUrl reports
         that a browser launched, not that the page loaded. The ask can hang
         until its timeout, so it happens off this thread. With manualUrl empty
-        - which is how a new app starts - the service answers no immediately
-        and the local copy is used without touching the network.
+        the service answers no immediately and the local copy is used without
+        touching the network.
         """
         if self.manualWorker is not None:
             return
@@ -156,9 +231,7 @@ class MainWindow(QMainWindow):
         worker.start()
 
     def openManual(self, publishedIsReachable: bool) -> None:
-        if publishedIsReachable and QDesktopServices.openUrl(
-            QUrl(appConfig.manualUrl)
-        ):
+        if publishedIsReachable and QDesktopServices.openUrl(QUrl(appConfig.manualUrl)):
             self.showStatus("The manual is opening in your browser.")
             return
         local = appConfig.manualPath
@@ -180,17 +253,13 @@ class MainWindow(QMainWindow):
         self.manualAction.setEnabled(True)
 
     def closeEvent(self, event: QCloseEvent) -> None:
+        # A thread running into interpreter shutdown turns a clean exit into a crash.
+        for view in self.analysisViews:
+            view.shutdown()
         if self.manualWorker is not None:
-            # Short, but a thread running into interpreter shutdown turns a
-            # clean exit into a crash.
             self.manualWorker.wait(int(appConfig.manualTimeoutSeconds * 1000) + 1000)
         super().closeEvent(event)
 
     def onHelpAbout(self) -> None:
         if showAbout(self):
-            self.showStatus(
-                "Thank you - the donation page is opening in your browser."
-            )
-
-    def onGreetClicked(self) -> None:
-        self.showStatus("Hello from Master Rebuild")
+            self.showStatus("Thank you - the donation page is opening in your browser.")

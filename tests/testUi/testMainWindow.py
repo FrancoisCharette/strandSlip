@@ -6,6 +6,8 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QKeySequence
 
 from masterRebuild import appConfig
+from masterRebuild.models.legacyProgram import SINUS
+from masterRebuild.models.strandPresets import reportStrandCurvature
 from masterRebuild.services import themeService
 from masterRebuild.ui.mainWindow import MainWindow
 
@@ -16,18 +18,25 @@ def testMainWindowOpens(qtbot) -> None:
     mainWindow.show()
 
     assert mainWindow.isVisible()
-    assert mainWindow.windowTitle() == "Master Rebuild"
-    assert mainWindow.statusBar().currentMessage() == "Ready"
+    assert mainWindow.windowTitle() == appConfig.windowTitle
+    assert mainWindow.windowTitle().startswith("Master Rebuild")
+    assert mainWindow.statusBar().currentMessage().startswith("Ready")
 
 
-def testGreetButtonUpdatesLabel(qtbot) -> None:
+def testOneTabForTheInputAndEachKindOfAnalysis(qtbot) -> None:
     mainWindow = MainWindow()
     qtbot.addWidget(mainWindow)
-    mainWindow.show()
 
-    qtbot.mouseClick(mainWindow.greetButton, Qt.MouseButton.LeftButton)
-
-    assert mainWindow.statusBar().currentMessage() == "Hello from Master Rebuild"
+    labels = [mainWindow.tabs.tabText(i) for i in range(mainWindow.tabs.count())]
+    assert labels == [
+        "Input · ENTRE",
+        "Sinusoid · SINUS BSINUS NSINUS",
+        "Constant Curvature · RAYON",
+        "Friction · FRICTION",
+        "Displacement · DEPLACE",
+    ]
+    programs = [p.key for view in mainWindow.analysisViews for p in view.programs]
+    assert programs == ["SINUS", "BSINUS", "NSINUS", "RAYON", "FRICTION", "DEPLACE"]
 
 
 def testMenuBarStructure(qtbot) -> None:
@@ -35,14 +44,74 @@ def testMenuBarStructure(qtbot) -> None:
     qtbot.addWidget(mainWindow)
 
     menuTitles = [action.text() for action in mainWindow.menuBar().actions()]
-    assert menuTitles == ["&File", "&Help"]
+    assert menuTitles == ["&File", "&Run", "&Help"]
 
     fileItems = [a.text() for a in mainWindow.fileMenu.actions() if not a.isSeparator()]
-    assert fileItems == ["&New", "&Open...", "&Save", "E&xit"]
-    assert any(a.isSeparator() for a in mainWindow.fileMenu.actions())
+    assert fileItems == [
+        "&Open ENTRE.DAT...",
+        "&Save ENTRE.DAT As...",
+        "Load &Example",
+        "Export &Legacy Files...",
+        "Export &CSV...",
+        "E&xit",
+    ]
+    runItems = [a.text() for a in mainWindow.runMenu.actions()]
+    assert runItems == ["&Run Current Program", "&Stop"]
+    assert mainWindow.runAction.shortcut() == QKeySequence("F5")
 
     helpItems = [a.text() for a in mainWindow.helpMenu.actions() if not a.isSeparator()]
-    assert helpItems == ["&Theme", "User &Manual...", "&About"]
+    assert helpItems == ["&Theme", "User &Manual...", "Legacy Fortran &Sources...", "&About"]
+
+
+def testRunAndExportNeedAProgramTab(qtbot) -> None:
+    mainWindow = MainWindow()
+    qtbot.addWidget(mainWindow)
+
+    assert mainWindow.tabs.currentWidget() is mainWindow.inputView
+    assert not mainWindow.runAction.isEnabled()
+    mainWindow.tabs.setCurrentWidget(mainWindow.frictionView)
+    assert mainWindow.runAction.isEnabled()
+    assert mainWindow.exportLegacyAction.isEnabled()
+
+
+def testF5RunsTheProgramOfTheCurrentTab(qtbot) -> None:
+    mainWindow = MainWindow()
+    qtbot.addWidget(mainWindow)
+    mainWindow.tabs.setCurrentWidget(mainWindow.sinusoidView)
+
+    mainWindow.runAction.trigger()
+    qtbot.waitUntil(lambda: not mainWindow.sinusoidView.isRunning(), timeout=20000)
+
+    output = mainWindow.sinusoidView.output
+    assert output is not None and output.result.program is SINUS
+    assert mainWindow.sinusoidView.tableModel.rowCount() == 101
+    assert mainWindow.statusBar().currentMessage().startswith("SINUS: 102 positions")
+
+
+def testLoadingAnExampleFromTheMenuFillsTheInputTab(qtbot) -> None:
+    mainWindow = MainWindow()
+    qtbot.addWidget(mainWindow)
+    mainWindow.tabs.setCurrentWidget(mainWindow.curvatureView)
+
+    mainWindow.examplesMenu.actions()[1].trigger()
+
+    assert mainWindow.tabs.currentWidget() is mainWindow.inputView
+    assert mainWindow.inputView.currentInput() == reportStrandCurvature.input
+
+
+def testChangingAnInputMarksAShownResultAsStale(qtbot) -> None:
+    mainWindow = MainWindow()
+    qtbot.addWidget(mainWindow)
+    view = mainWindow.frictionView
+    view.run()
+    qtbot.waitUntil(lambda: not view.isRunning(), timeout=20000)
+    assert view.staleLabel.isHidden()
+
+    edit = mainWindow.inputView.edits["amplitude"]
+    edit.setText("0.05")
+    edit.textEdited.emit("0.05")
+
+    assert not view.staleLabel.isHidden()
 
 
 def testThemeMenuOffersSystemLightDark(qtbot) -> None:
@@ -82,27 +151,11 @@ def testSavedThemeIsRestoredOnNextLaunch(qtbot) -> None:
     assert reopened.themeActions[themeService.lightTheme].isChecked()
 
 
-def testFileMenuPlaceholdersUpdateStatus(qtbot) -> None:
-    mainWindow = MainWindow()
-    qtbot.addWidget(mainWindow)
-
-    mainWindow.newAction.trigger()
-    assert mainWindow.statusBar().currentMessage() == "File > New selected"
-
-    mainWindow.openAction.trigger()
-    assert mainWindow.statusBar().currentMessage() == "File > Open selected"
-
-    mainWindow.saveAction.trigger()
-    assert mainWindow.statusBar().currentMessage() == "File > Save selected"
-
-
 def testAboutOpensTheDialogAndReportsADonation(qtbot, monkeypatch) -> None:
     """The About text itself is covered in testAboutDialog."""
     mainWindow = MainWindow()
     qtbot.addWidget(mainWindow)
-    monkeypatch.setattr(
-        "masterRebuild.ui.mainWindow.showAbout", lambda parent: True
-    )
+    monkeypatch.setattr("masterRebuild.ui.mainWindow.showAbout", lambda parent: True)
 
     mainWindow.onHelpAbout()
 
