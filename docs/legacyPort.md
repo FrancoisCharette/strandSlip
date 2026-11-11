@@ -1,8 +1,9 @@
-# Porting notes: the 1990 Fortran programs
+# Porting notes: the 1990 and 1992 Fortran programs
 
-How `legacy/programmes/*.FOR` became `src/masterRebuild/services/`, what was kept on purpose,
-what was not, and how the port was checked. For maintainers; users want
-[`manual/README.md`](manual/README.md).
+How `legacy/programmes/*.FOR` (1990) and `legacy/manuel1992/` (1992) became
+`src/masterRebuild/services/`, what was kept on purpose, what was not, and how the port was
+checked. For maintainers; users want [`manual/README.md`](manual/README.md). The 1992 programs
+are [further down](#the-1992-thesis-programs).
 
 ## The programs
 
@@ -128,5 +129,120 @@ the demand returns below the limit within one lay length (≤ divisor steps).
 
 The stiffness curve has jumps where a wire enters or leaves a slip zone: the 1990 model, after
 Hardy, does not impose continuity of deformation at the slip bounds. The models of the 1992
-thesis (continuity of deformation, compliance) addressed exactly this; their sources are in the
-printed listings of `Manuel/MANUEL.MAN`, not in `Programmes/`.
+thesis (continuity of deformation, compliance) addressed exactly this; they follow.
+
+## The 1992 thesis programs
+
+Six programs, one per model and imposed deflection, each solving one wire of a strand over a
+half lay length in the dimensionless variables of annex A of the thesis: positions ξ = X/p in
+lay lengths, ρ̄ = ρ/ρc, Ā = A/Ac, Λ = λ/p, the compliance factor γ1. Their sources survive only
+as the listings printed in annex C of `Manuel/MANUEL.MAN`;
+[`legacy/manuel1992/README.md`](../legacy/manuel1992/README.md) says how they were recovered.
+
+| Program | Model | Deflection | Writes |
+|---|---|---|---|
+| HARDRHOB | Hardy: strain jumps at the macro-slip bounds | constant radius | DEP.DAT, ELG.DAT, FRC.DAT (on request) |
+| CONTRHOB | continuity of deformation | constant radius | the same |
+| ZETARHOB | compliance (micro- and macro-slip) | constant radius | ENERGY.DAT, INCONNUS.DAT, ZETA*.DAT |
+| HARDSIN, CONTSIN, ZETASIN | the same three | sinusoid; choice 1, 2 or 3 | the same, by model |
+
+All six were interactive. `ThesisInput` holds what they ask at the start (ρ̄, or the choice, Λ
+and Ā; γ1; XTOUR; whether to compute the profiles); `approximations` answers, in order, what
+they ask only when an automatic approximation fails (XB1 for CONTRHOB, XB1 then XB2 for CONTSIN,
+XB1C for the compliance programs). The screen is rebuilt as the session it was: prompts, the
+typed answers, Newton's iterations, PAUSE messages and results. Where the program would wait
+for an answer the inputs do not give (another radius, another XTOUR, another approximation),
+the run ends there and the result says what was asked (`ThesisResult.pendingQuestion`).
+
+### Where each listing went
+
+| Listings | Service |
+|---|---|
+| QROMB, TRAPZD, POLINT, RTSEC, RTFLSP, GOLDEN, DLUDCMP, DLUBKSB | `thesisNumerics` |
+| DEPAME, ELGAME, FRCAME, FRICTION, APPBRN, VMIN, DEPFIL, ELGFIL, FRCFIL, DEPH, DR2H, F1D–F2E | `thesisDeflections` |
+| bounds of HARDRHOB and HARDSIN, DMACRO, NEWT, VCB, JACO, PBCONV | `macroSlipModels`, `thesisPrograms` |
+| COMP, VECB, JACOB | `complianceSystem` |
+| NEWTON, UNRES, APPROX, APPSIN, DMICRO, DISPENRG, the portion loop of ZETA* | `complianceModel` |
+| SORTIE, SORTZETA | `thesisProfiles` |
+| the main programs, ENT*, ENSN*, ECR*, ECSN*, INCONNUS | `thesisPrograms`, `thesisSinusoidPrograms`, `thesisScreens` |
+| keyboard, screen, files; running; tables | `thesisSession`, `thesisRunner`, `thesisTables` |
+
+As for 1990, every expression keeps the listing's operand order and integer powers are
+products, so each value is the same IEEE computation as the listing's.
+
+### Kept on purpose
+
+1. **REAL\*4 constants.** `EPS=1.E-6` (QROMB), `R=.61803399` and `C=.38196602` (GOLDEN) and
+   `TINY=1.0E-20` (DLUDCMP) are single-precision constants in DOUBLE PRECISION names; `XM-.03`
+   and `XM+0.03` (the bracket of APPBRN), `RHOB.LT.0.65` (CONTRHOB) and `WLBAR/4-.6` (the end of
+   choice 1) use single-precision literals (`thesisNumerics.real4`).
+2. **`IF(XINF.LT.0001)`** in APPSIN: `0001` is the integer 1, so the half lay length from 0.5
+   also takes RHOBINF = 1.
+3. **DLUBKSB sets `II=1`** where Numerical Recipes sets `II=I`. The extra terms multiply zeros.
+4. **Newton's exits.** NEWT and NEWTON return the iterate before the last correction; NEWTON
+   gives up at its 14th iteration and on the first negative transition point, leaving the
+   others unchanged; a run that needs typed help asks again after every failure.
+5. **One region.** ZETARHOB solves nothing for a single micro-slip region: BTM and ETM are read
+   unassigned and DOS left static storage zero (for θi = 90° on the first half lay length that
+   is the exact solution). ZETASIN solves it (UNRES).
+6. **The portion loop.** COMP always builds ten linear portions; the number of regions grows
+   from one until 2δ at the centre fits the last portion used, eleven meaning a macro-slip
+   centre. ZETASIN starts each half lay length where the previous one stopped.
+7. **DMICRO's clamp.** A share above 1 is rounded (DNINT); if still above 1 the program prints
+   its warning, pauses, and uses 1.
+8. **SORTZETA's loop** ends at `X.LE.XSUP` with no tolerance (SORTIE allows 1E-9), keeps the
+   last values where X falls in no region, and sets the friction ratio of a macro-slip region
+   to −1 whatever the side.
+9. **Accumulations**: X=X+DX in the profiles, XTOUR=XTOUR+0.5, X=X+DEL in TRAPZD (whose IT
+   survives between calls), the running sum of YCOMP in COMP, energies summed region by region.
+10. **Formats**: every FORMAT as printed (`thesisScreens`), with Microsoft FORTRAN's backslash
+    (the prompt line stays open for the answer) and its tolerance of `1X'text'`. ECRZETA 41
+    continues `'Les valeurs des '` with `'inconnues…'` on the next line: with each line padded
+    to column 72 these are two strings, not an escaped apostrophe.
+11. **INCONNUS's parameter record** is printed for the sinusoid; ZETARHOB writes the block for
+    the constant radius that the listing has commented out below it.
+
+### Not reproduced
+
+- **8087 arithmetic and the runtime's functions.** As for 1990, temporaries were 80-bit; the
+  last bit of a cosine or an exponential may differ. `X**2.0D0` is the correctly rounded square
+  (Windows' `pow` gives another double in 95 of 200 000 cases; the 8087 would almost always
+  have rounded correctly).
+- **POLINT's X.** QROMB passes the REAL\*4 constant `0.` where POLINT expects DOUBLE PRECISION:
+  the high half of what POLINT read was whatever followed the constant in memory, which only the
+  lost executables could tell. 0 is used.
+- **Undefined values and run-time errors.** RTFLSP returns nothing after a failed bracket and
+  HARDSIN carried on with it; a zero divisor, an overflowing exponential (large Λ) or DACOS of a
+  value outside −1..1 stopped the DOS program with a run-time error. The port stops with an
+  explanation in each case.
+- **The runtime's own text** for PAUSE (the message is shown) and STOP (nothing is shown).
+
+### How it was checked
+
+- **Published values** (`tests/testServices/testThesisPublished.py`). Table 6.1 of the thesis
+  (constant radius, γ1 = 0.06): every bound and energy of both models at ρ̄ = 1.0, 0.8 and 0.6.
+  Table 6.2 (sinusoid, Λ = 28): Hardy's total energies 0.066745 and 1.20146 and its bounds;
+  the compliance model's total 0.019013 at Ā = 1.0, 0.130465 at Ā = 1.3, its bounds near the
+  antinode, B1 − INF = 0.10224 and SUP − B2 = 0.10129 at Ā = 1.4. The manual's examples: APPROX
+  tries 0.136284 at ρ̄ = 0.7 and 0.10 converges; APPSIN tries 0.16648 and 0.12123 at Ā = 2.0
+  and 0.19 and 0.10 converge.
+- **Where the thesis slipped**: table 6.1(c) prints B2 = 0.39754 (the bounds are symmetric:
+  0.39758); 6.2(c) prints B1 = 6.58430 for Hardy (the root is 6.584266, bisection agrees);
+  6.2(b) prints 6.63290 for 6.6328945 (rounded twice); its totals are sums of rounded parts.
+  Table 6.2(b) needs, at half lay length 4.5, an approximation between 0.198 and 0.211: Newton
+  then finds a macro-slip region 0.0156 wide and the table's total; from 0.2 it finds a region
+  of zero width. One difference is unexplained: in table 6.2(c) the micro-slip energy in the
+  macro-slip regions is 0.148658 where the programs give 0.148457, and the total carries the
+  same 0.0002; the macro-slip and micro-slip columns and the bounds agree.
+- **Literal transcription.** `tests/legacyReference/literalThesis*.py` transcribes the 66
+  listings line by line (Fortran names, GOTOs as loops, COMMON blocks as attributes, the
+  keyboard as answers by variable). The engine prints the same screen and writes the same files,
+  record for record, on 19 runs covering the six programs and all three choices, and stops at
+  the same question on six more (`testThesisPrograms.py`).
+- **Formats.** Every FORMAT in `thesisScreens` is checked against the 96 distinct formats of
+  the listings (`testThesisScreens.py`).
+- **Physics.** Hardy's bounds are asin(ρ̄)/2π; the continuity model's macro-slip region is
+  wider than Hardy's and its strain continuous; as γ1 decreases the compliance model's bound and
+  energy move steadily toward the continuity model's (section 6.1.1.4 of the thesis).
+- **The sources.** Each diskette directory is a whole program, and the recovery tool rebuilds
+  every file from `MANUEL.MAN` (`testManuel1992Listings.py`, run where the manual is present).

@@ -1,8 +1,10 @@
 # Master Rebuild — user manual
 
 Master Rebuild runs the seven Fortran programs of 1990 that computed the transverse stiffness
-of a strand — wires wound on a core, sticking to it or slipping — under an imposed deflection.
-The numbers are the ones the old programs printed; the plots, tables and file handling are new.
+of a strand — wires wound on a core, sticking to it or slipping — under an imposed deflection,
+and the six programs of the 1992 thesis that computed the energy a wire dissipates by slipping
+([the thesis tabs](#the-thesis-tabs-1992)). The numbers are the ones the old programs printed;
+the plots, tables and file handling are new.
 
 ![The Sinusoid tab after running SINUS on the 1991 strand](images/sinusoid.png)
 
@@ -23,6 +25,10 @@ stiffness the 1991 report printed, 1671.24 N·m².
 | Constant Curvature | RAYON | Stiffness EI along X for a constant radius of curvature ρ |
 | Friction | FRICTION | Friction each wire needs to stay stuck (equation 19) |
 | Displacement | DEPLACE | Displacement of the core surface along each contact helix (equation 23) |
+| Thesis · Constant Curvature | HARDRHOB, CONTRHOB, ZETARHOB | One half lay length bent to a constant radius: slip regions, energy dissipated, displacement difference |
+| Thesis · Sinusoid | HARDSIN, CONTSIN, ZETASIN | The same along a sinusoid: energy over a wavelength, displacement difference at λ/4, or one half lay length |
+
+The Input tab feeds the 1990 programs only; the thesis tabs have their own answers.
 
 ## The Input tab
 
@@ -110,8 +116,102 @@ On the right:
 - The stiffness jumps where a wire starts or stops slipping: the 1990 model does not make the
   wire's deformation continuous at the slip bounds.
 
+## The thesis tabs (1992)
+
+The thesis followed one wire over half a lay length (a "demi-pas") of a strand bent by an
+imposed deflection. Where the friction the wire needs to stay stuck exceeds what the core can
+give, the wire slips (macro-slip); the three models differ in what happens around it:
+
+- **Hardy's model** (HARDRHOB, HARDSIN): the wire is stuck outside the macro-slip region and the
+  strain jumps at its bounds.
+- **Continuity of deformation** (CONTRHOB, CONTSIN): no jump; the region is wider.
+- **Compliance** (ZETARHOB, ZETASIN): the contact gives a little before it slips, along a curve
+  cut into ten linear portions, so the wire micro-slips everywhere; up to ten regions each side
+  of the macro-slip region.
+
+![The constant-curvature thesis tab after ZETARHOB at ρ/ρc = 0.8](images/thesis.png)
+
+Everything is dimensionless, as in annex A of the thesis: positions ξ = X/p in lay lengths, the
+radius of curvature ρ/ρc, the amplitude A/Ac, the wavelength λ/p in lay lengths, the compliance
+factor γ1 (0.056 for the strand of the 1991 reports; the thesis uses 0.06).
+
+### Answering the program
+
+The programs asked their questions one by one at the keyboard; the tab asks them as a form, and
+hovering over a field shows the question. Only the questions the chosen program asks are shown.
+
+- **Radius of curvature ρ/ρc** (constant curvature): there is macro-slip below 1.0. CONTRHOB
+  accepts 0.65 to 1.0.
+- **Calculation** (sinusoid): 1 sums the energy of every half lay length from the origin to λ/4
+  and multiplies by four, for a wire at θi = 90°; 2 gives the relative displacement difference
+  at λ/4 (θi = 0°); 3 analyses the half lay length starting XTOUR turns from the origin.
+- **Lay lengths per wavelength λ/p**: an even number (the thesis uses 28). **Amplitude A/Ac**:
+  macro-slip needs more than 1.0 for HARDSIN and CONTSIN (CONTSIN up to about 1.5).
+- **Profiles along the half lay length**: displacement, strain and friction ratio every 0.001.
+- **Typed approximations**: see below.
+
+### When the program asks for an approximation
+
+The continuity and compliance models solve their equations by Newton's method from an
+automatic approximation, which does not always work: the program then asked for one at the
+keyboard. Type the values in **Typed approximations** (spaces or commas between them); they
+answer the program's questions in the order it asks them — XB1 for CONTRHOB, XB1 then XB2 for
+CONTSIN, XB1C (the distance from the start of the half lay length to the first bound) for
+ZETARHOB and ZETASIN, one per question, and the next one again if Newton fails once more.
+
+If the program asks and nothing is left to answer, the run stops at the question: it is shown
+in orange under the form, the **Screen Output** ends with it, and whatever was solved before
+stays readable. Add a value and run again.
+
+![ZETARHOB stops at ρ/ρc = 0.7 and asks for an approximation](images/thesisQuestion.png)
+
+The manual of 1992 gives the cases it knew: at γ1 = 0.06, ρ/ρc = 0.7 needs 0.10 (APPROX tried
+0.136284); along a sinusoid at A/Ac = 2.0 (λ/p = 28), the half lay length from 2.5 needs about
+0.19 and the later ones values below the one tried. Different approximations can lead Newton to
+different solutions: at A/Ac = 1.3 over the wavelength, the half lay length from 4.5 needs two,
+and only a second one between 0.198 and 0.211 gives the solution the thesis tabulated.
+
+### Reading and exporting
+
+**Plot** offers the profiles (with slip solid, without slip dashed, the transitions between
+linear portions as dots, the macro-slip region shaded), **Slip Regions** (each half lay length
+solved, its macro-slip region in red or blue by the sign of friction), **Energy per Half Lay
+Length** (calculation 1) and **Energy by Region** (compliance). On the right: **Half Lay
+Lengths** (bounds XB1 and XB2, the two other unknowns, the energy, and for compliance the number
+of regions and how the energy splits), **Profile**, **Summary** and **Screen Output**.
+
+**Export Legacy Files…** writes what the program wrote — DEP.DAT, ELG.DAT and FRC.DAT for the
+profiles; ENERGY.DAT, INCONNUS.DAT and the ZETA\*.DAT files for the compliance model — plus the
+screen as `<PROGRAM>.OUT`. **Export CSV…** writes the table on show (the half lay lengths, or
+the profile when its tab is selected).
+
+### Reproducing the thesis
+
+| Tab and program | Answers | Thesis |
+|---|---|---|
+| Constant Curvature, HARDRHOB | ρ/ρc = 0.8 | table 6.1(b): B1 = 0.14758, B2 = 0.35242, energy 0.003582 |
+| Constant Curvature, ZETARHOB | γ1 = 0.06, ρ/ρc = 0.8 | table 6.1(b): B1 = 0.15124, B2 = 0.34876 |
+| Constant Curvature, ZETARHOB | γ1 = 0.06, ρ/ρc = 0.6, approximation 0.05 | table 6.1(c): B1 = 0.05238 |
+| Sinusoid, HARDSIN | calculation 1, λ/p = 28, A/Ac = 1.3 | table 6.2(b): total 0.066745 |
+| Sinusoid, ZETASIN | calculation 1, λ/p = 28, A/Ac = 1.0, γ1 = 0.06 | table 6.2(a): total 0.019013 |
+| Sinusoid, ZETASIN | calculation 1, A/Ac = 1.3, approximations 0.149174136 0.205 | table 6.2(b): total 0.130465 |
+| Sinusoid, ZETASIN | calculation 3, A/Ac = 1.4, XTOUR = 6.5 | section 6.1.2: B1 − INF = 0.10224 |
+
+### What you will see that the 1992 programs also did
+
+- The compliance model's profile usually stops one step before the end of the half lay length
+  (its loop ends at X ≤ XSUP after adding 0.001 five hundred times); Hardy's and continuity's
+  include it.
+- In a macro-slip region, the compliance model's friction ratio is −1 whatever the side.
+- Over the wavelength, ZETASIN starts each half lay length with as many regions as the one
+  before needed.
+- DMICRO rounds a share of micro-slip above one to the nearest whole number; when that leaves
+  more than one (a share of 1.5 or more) it prints `ATTENTION! FUNCTION DMICRO`, pauses and uses
+  one. The screen shows it and the run goes on.
+
 ## When something goes wrong
 
 Failures open a dialog with the whole explanation; the status bar holds a one-line summary.
-"*PROGRAM* Did Not Run" lists every input it cannot use and why. The original sources are under
-**Help > Legacy Fortran Sources**.
+"*PROGRAM* Did Not Run" lists every input it cannot use and why. A thesis program that stops to
+ask a question is not a failure: the question is on the tab. The original sources — the 1990
+files and the 1992 listings — are under **Help > Legacy Fortran Sources**.

@@ -34,9 +34,28 @@ def testOneTabForTheInputAndEachKindOfAnalysis(qtbot) -> None:
         "Constant Curvature · RAYON",
         "Friction · FRICTION",
         "Displacement · DEPLACE",
+        "Thesis · Constant Curvature",
+        "Thesis · Sinusoid",
     ]
     programs = [p.key for view in mainWindow.analysisViews for p in view.programs]
     assert programs == ["SINUS", "BSINUS", "NSINUS", "RAYON", "FRICTION", "DEPLACE"]
+    thesis = [p.key for view in mainWindow.thesisViews for p in view.programs]
+    assert thesis == ["HARDRHOB", "CONTRHOB", "ZETARHOB", "HARDSIN", "CONTSIN", "ZETASIN"]
+    assert "HARDRHOB, CONTRHOB, ZETARHOB" in mainWindow.tabs.tabToolTip(5)
+
+
+def testF5RunsAThesisProgram(qtbot) -> None:
+    mainWindow = MainWindow()
+    qtbot.addWidget(mainWindow)
+    view = mainWindow.thesisRadiusView
+    mainWindow.tabs.setCurrentWidget(view)
+    assert mainWindow.runAction.isEnabled()
+
+    mainWindow.runAction.trigger()
+    qtbot.waitUntil(lambda: not view.isRunning(), timeout=20000)
+
+    assert view.output is not None and view.output.result.program.key == "HARDRHOB"
+    assert mainWindow.statusBar().currentMessage().startswith("HARDRHOB: 1 half lay length")
 
 
 def testMenuBarStructure(qtbot) -> None:

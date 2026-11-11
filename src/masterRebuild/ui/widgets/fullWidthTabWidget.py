@@ -1,4 +1,9 @@
-"""Tab widget whose tabs share the full width equally, labels centered."""
+"""Tab widget whose tabs share the full width, labels centered.
+
+Equal shares while every label fits in one; otherwise each tab gets the full
+width in proportion to its label, so a long label is not cut short by a short
+neighbour's spare room.
+"""
 
 from __future__ import annotations
 
@@ -12,7 +17,14 @@ class FullWidthTabBar(QTabBar):
         size = super().tabSizeHint(index)
         tabWidget = self.parentWidget()
         if self.count() and tabWidget is not None:
-            size.setWidth(tabWidget.width() // self.count())
+            share = tabWidget.width() // self.count()
+            natural = [
+                super(FullWidthTabBar, self).tabSizeHint(i).width() for i in range(self.count())
+            ]
+            if max(natural) <= share:
+                size.setWidth(share)
+            else:
+                size.setWidth(tabWidget.width() * natural[index] // sum(natural))
         return size
 
 

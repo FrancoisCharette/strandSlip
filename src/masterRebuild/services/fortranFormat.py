@@ -1,9 +1,11 @@
-"""Fortran 77 formatted records, the way the 1990 programs wrote and read them.
+"""Fortran 77 formatted records, the way the 1990 and 1992 programs wrote and read them.
 
 Only what the legacy FORMAT statements use: nX, quoted text, '/', Iw, Fw.d,
-Ew.d, Ew.dEe and Dw.d on output; Iw, Fw.d, Ew.d and Dw.d on input. Callers
-pass the FORMAT contents exactly as they appear in the .FOR files, so each
-record can be checked against the source by eye.
+Ew.d, Ew.dEe and Dw.d on output, plus Microsoft's backslash, which keeps the
+line open for the answer to a prompt; Iw, Fw.d, Ew.d and Dw.d on input.
+Callers pass the FORMAT contents exactly as they appear in the .FOR files, so
+each record can be checked against the source by eye. Like Microsoft FORTRAN,
+a comma may be left out next to a quoted string (`1X'text'`, `'XB1='D14.8`).
 
 Conventions where Fortran leaves a choice to the compiler follow gfortran:
 the optional leading zero is printed when it fits and dropped when it does
@@ -27,7 +29,7 @@ class FortranFormatError(ValueError):
 
 @dataclass(frozen=True)
 class FormatItem:
-    kind: str  # "X", "TEXT", "/", "I", "F", "E", "D"
+    kind: str  # "X", "TEXT", "/", "\\", "I", "F", "E", "D"
     width: int = 0
     decimals: int = 0
     exponentDigits: int | None = None
@@ -44,6 +46,13 @@ def _tokens(spec: str) -> list[str]:
     index = 0
     while index < len(spec):
         char = spec[index]
+        if char in "'\\" and current:  # a descriptor written against a string or a backslash
+            tokens.append("".join(current))
+            current = []
+        if char == "\\":
+            tokens.append("\\")
+            index += 1
+            continue
         if char == "'":
             end = index + 1
             text: list[str] = []
@@ -79,8 +88,8 @@ def _tokens(spec: str) -> list[str]:
 def parseFormat(spec: str) -> tuple[FormatItem, ...]:
     items: list[FormatItem] = []
     for token in _tokens(spec):
-        if token == "/":
-            items.append(FormatItem("/"))
+        if token in ("/", "\\"):
+            items.append(FormatItem(token))
             continue
         if token.startswith("'"):
             items.append(FormatItem("TEXT", text=token[1:]))
@@ -222,8 +231,13 @@ def _formatValue(item: FormatItem, value: float | int) -> str:
     return formatExponent(float(value), item.width, item.decimals, item.exponentDigits, letter)
 
 
+def keepsLineOpen(spec: str) -> bool:
+    """Whether a WRITE with this FORMAT ends in a backslash: the next text continues the line."""
+    return any(item.kind == "\\" for item in parseFormat(spec))
+
+
 def formatRecord(spec: str, values: Sequence[float | int] = ()) -> str:
-    """One WRITE with this FORMAT; '/' becomes a line break."""
+    """One WRITE with this FORMAT; '/' becomes a line break, a backslash writes nothing."""
     parts: list[str] = []
     remaining = list(values)
     for item in parseFormat(spec):
@@ -233,6 +247,8 @@ def formatRecord(spec: str, values: Sequence[float | int] = ()) -> str:
             parts.append(item.text)
         elif item.kind == "/":
             parts.append("\n")
+        elif item.kind == "\\":
+            continue
         else:
             if not remaining:
                 raise FortranFormatError(f"FORMAT ({spec}) has more descriptors than values")

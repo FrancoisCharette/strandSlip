@@ -94,7 +94,7 @@ def choicesFor(result: AnalysisResult) -> tuple[PlotChoice, ...]:
     return displacementChoices
 
 
-def _lineHover(axes: Axes, x: np.ndarray, y: np.ndarray, describe, color: str) -> Hover:
+def lineHover(axes: Axes, x: np.ndarray, y: np.ndarray, describe, color: str) -> Hover:
     order = np.argsort(x)
     sortedX = x[order]
 
@@ -168,7 +168,7 @@ def _drawTotal(axes: Axes, theme: ChartTheme, result: StiffnessResult, key: str)
         )
     if key == "stiffness":
         _robustLimits(axes, y, reference, theme)
-    return _lineHover(
+    return lineHover(
         axes, x, y, lambda xv, yv: f"X = {xv:.4f} m\n{symbol} = {yv:.6g} {unit}", theme.series
     )
 
@@ -257,7 +257,7 @@ def _drawWires(
     axes.legend(handles=handles, loc="upper right", frameon=False, fontsize=8)
     for text in axes.get_legend().get_texts():
         text.set_color(theme.secondaryInk)
-    return _lineHover(axes, positions, values[:, wire], describe, theme.series)
+    return lineHover(axes, positions, values[:, wire], describe, theme.series)
 
 
 def _drawLimits(axes: Axes, theme: ChartTheme, limit: float) -> None:
@@ -309,7 +309,7 @@ def _drawBrackets(axes: Axes, theme: ChartTheme, result: DisplacementResult, wir
     axes.set_ylabel("Bracket (1/m)")
     setTitle(axes, theme, f"The Two Brackets of Equation 23, Wire {wire + 1}  ·  DEPLACE")
     styleLegend(axes, theme, loc="upper right")
-    return _lineHover(
+    return lineHover(
         axes,
         x,
         result.termA[:, wire],

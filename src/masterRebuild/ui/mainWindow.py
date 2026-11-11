@@ -17,12 +17,18 @@ from PySide6.QtWidgets import QMainWindow, QMessageBox
 from masterRebuild import appConfig
 from masterRebuild.models.legacyProgram import BSINUS, DEPLACE, FRICTION, NSINUS, RAYON, SINUS
 from masterRebuild.models.strandPresets import allPresets
+from masterRebuild.models.thesisProgram import (
+    ThesisDeflection,
+    radiusPrograms,
+    sinusoidPrograms,
+)
 from masterRebuild.services import themeService
 from masterRebuild.services.manualWorker import ManualWorker
 from masterRebuild.ui.dialogs.aboutDialog import showAbout
 from masterRebuild.ui.dialogs.errorDialog import showError
 from masterRebuild.ui.views.analysisView import AnalysisView
 from masterRebuild.ui.views.inputView import InputView
+from masterRebuild.ui.views.thesisView import ThesisView
 from masterRebuild.ui.widgets.fullWidthTabWidget import FullWidthTabWidget
 from masterRebuild.ui.widgets.reportingView import ReportingView
 
@@ -46,6 +52,9 @@ class MainWindow(QMainWindow):
             self.frictionView,
             self.displacementView,
         )
+        self.thesisRadiusView = ThesisView(radiusPrograms, ThesisDeflection.constantRadius)
+        self.thesisSinusoidView = ThesisView(sinusoidPrograms, ThesisDeflection.sinusoid)
+        self.thesisViews = (self.thesisRadiusView, self.thesisSinusoidView)
 
         self.tabs = FullWidthTabWidget()
         self.tabs.setObjectName("programTabs")
@@ -54,10 +63,17 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.curvatureView, "Constant Curvature · RAYON")
         self.tabs.addTab(self.frictionView, "Friction · FRICTION")
         self.tabs.addTab(self.displacementView, "Displacement · DEPLACE")
+        for view, label in (
+            (self.thesisRadiusView, "Thesis · Constant Curvature"),
+            (self.thesisSinusoidView, "Thesis · Sinusoid"),
+        ):
+            index = self.tabs.addTab(view, label)
+            keys = ", ".join(program.key for program in view.programs)
+            self.tabs.setTabToolTip(index, f"The 1992 thesis programs {keys}")
         self.tabs.currentChanged.connect(self.onTabChanged)
         self.setCentralWidget(self.tabs)
 
-        for view in (self.inputView, *self.analysisViews):
+        for view in (self.inputView, *self.analysisViews, *self.thesisViews):
             self.connectView(view)
         for view in self.analysisViews:
             self.inputView.inputChanged.connect(view.markInputsChanged)
@@ -147,9 +163,9 @@ class MainWindow(QMainWindow):
 
     # -- tabs and runs ------------------------------------------------------------
 
-    def currentAnalysis(self) -> AnalysisView | None:
+    def currentAnalysis(self) -> AnalysisView | ThesisView | None:
         widget = self.tabs.currentWidget()
-        return widget if isinstance(widget, AnalysisView) else None
+        return widget if isinstance(widget, AnalysisView | ThesisView) else None
 
     def onTabChanged(self, _index: int = 0) -> None:
         onAnalysis = self.currentAnalysis() is not None
@@ -208,7 +224,9 @@ class MainWindow(QMainWindow):
             self.showStatus(f"Opening {folder}")
             return
         QMessageBox.information(
-            self, "Legacy Fortran Sources", f"The original .FOR and .EXE files are in:\n\n{folder}"
+            self,
+            "Legacy Fortran Sources",
+            f"The 1990 originals (.FOR and .EXE) and the 1992 listings are in:\n\n{folder}",
         )
 
     def onHelpManual(self) -> None:
@@ -254,7 +272,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event: QCloseEvent) -> None:
         # A thread running into interpreter shutdown turns a clean exit into a crash.
-        for view in self.analysisViews:
+        for view in (*self.analysisViews, *self.thesisViews):
             view.shutdown()
         if self.manualWorker is not None:
             self.manualWorker.wait(int(appConfig.manualTimeoutSeconds * 1000) + 1000)

@@ -1,7 +1,7 @@
 [project]
 name = "master-rebuild"
 version = "0.1.0"
-description = "Revival of the 1990 Fortran strand-stiffness programs (SINUS, BSINUS, NSINUS, RAYON, FRICTION, DEPLACE, ENTRE) as a PySide6 desktop app"
+description = "Revival of the 1990 Fortran strand-stiffness programs (SINUS, BSINUS, NSINUS, RAYON, FRICTION, DEPLACE, ENTRE) and the six 1992 thesis programs (HARDRHOB, CONTRHOB, ZETARHOB, HARDSIN, CONTSIN, ZETASIN) as a PySide6 desktop app"
 requires-python = ">=3.14"
 dependencies = [
     "PySide6>=6.6,<7",
@@ -34,7 +34,7 @@ target-version = "py314"
 select = ["E", "F", "I", "UP"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["masterRebuild", "legacyReference"]
+known-first-party = ["masterRebuild", "legacyReference", "listingReader"]
 
 [tool.ruff.lint.per-file-ignores]
 # The transcriptions keep the Fortran names (I, X1...) and expressions whole,

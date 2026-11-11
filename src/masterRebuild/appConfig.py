@@ -42,11 +42,13 @@ manualUrl = ""
 # How long to wait for the published copy before falling back to the local one.
 manualTimeoutSeconds = 3.0
 
-# The seven 1990 Fortran programs this app revives, kept as they were found.
-legacySourcesDir = projectRoot / "legacy" / "programmes"
+# The seven 1990 Fortran programs this app revives, kept as they were found
+# (legacy/programmes), and the 1992 thesis programs recovered from the printed
+# manual (legacy/manuel1992). Help > Legacy Fortran Sources opens both.
+legacySourcesDir = projectRoot / "legacy"
 
 appDataDir = Path(os.environ.get("APPDATA", str(Path.home()))) / appName
 settingsFile = appDataDir / "settings.ini"
-windowTitle = f"{appName} — The 1990 Strand Stiffness Programs"
+windowTitle = f"{appName} — The 1990 and 1992 Strand Programs"
 defaultWindowWidth = 1320
 defaultWindowHeight = 860

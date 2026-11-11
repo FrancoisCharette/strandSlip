@@ -40,6 +40,24 @@ def testTabsKeepEqualShareAfterResize(qtbot) -> None:
     qtbot.waitUntil(lambda: tabsFillHalves(tabWidget), timeout=5000)
 
 
+def testALongLabelGetsTheRoomItNeeds(qtbot) -> None:
+    """When an equal share would cut a label, widths follow the labels instead."""
+    tabWidget = FullWidthTabWidget()
+    qtbot.addWidget(tabWidget)
+    long = "Sinusoid · SINUS BSINUS NSINUS and a few more words"
+    for title in ("A", "B", long):
+        tabWidget.addTab(QWidget(), title)
+    tabWidget.resize(420, 300)
+    tabWidget.show()
+    tabBar = tabWidget.tabBar()
+
+    def longIsWidest() -> bool:
+        widths = [tabBar.tabRect(i).width() for i in range(tabBar.count())]
+        return widths[2] > widths[0] and sum(widths) >= tabWidget.width() - tabBar.count()
+
+    qtbot.waitUntil(longIsWidest, timeout=5000)
+
+
 def testThreeTabsShareThirds(qtbot) -> None:
     tabWidget = FullWidthTabWidget()
     qtbot.addWidget(tabWidget)

@@ -114,6 +114,28 @@ def testSlashesAndTextAndLowercaseExponent() -> None:
     assert formatRecord("'L''AME'") == "L'AME"
 
 
+def testCommaMayBeLeftOutNextToAString() -> None:
+    """Microsoft FORTRAN accepted `1X'text'` and `'XB1='D16.8` (ECRHARD, NEWTON)."""
+    assert formatRecord("/,1X'avec THETAi = ',F7.5", [1.5707963]) == "\n avec THETAi = 1.57080"
+    assert formatRecord("1X,'XB1='D16.8,5X,'XB2=',D16.8", [0.15, -0.35]) == (
+        " XB1=  0.15000000D+00     XB2= -0.35000000D+00"
+    )
+
+
+def testBackslashKeepsThePromptLineOpen() -> None:
+    spec = "/,1X,'Entrez le rayon de courbure adim.:',\\"
+    assert formatRecord(spec) == "\n Entrez le rayon de courbure adim.:"
+    assert fortranFormat.keepsLineOpen(spec)
+    assert not fortranFormat.keepsLineOpen("1X,'Fin'")
+
+
+def testDoubledQuoteInsideAFormatStatementIsAnApostrophe() -> None:
+    """ECRZETA 41: 'Les valeurs des ' continued by 'inconnues...' is one string."""
+    assert formatRecord("3X,'Les valeurs des ''inconnues sont sauvegardées'") == (
+        "   Les valeurs des 'inconnues sont sauvegardées"
+    )
+
+
 def testValueCountMustMatch() -> None:
     with pytest.raises(FortranFormatError):
         formatRecord("1X,F8.4,F8.4", [1.0])
