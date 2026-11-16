@@ -196,7 +196,7 @@ class AnalysisView(ReportingView):
         try:
             value = self.inputProvider()
         except InputError as error:
-            self.reportError(f"{program.key} Did Not Run", f"Fix the Input tab first.\n{error}")
+            self.reportError(f"{program.key} Did Not Run", f"Fix the Strand tab first.\n{error}")
             return
         issues = inputValidation.validationIssues(value, program)
         if issues:
@@ -283,7 +283,7 @@ class AnalysisView(ReportingView):
         self.reportStatus(message)
 
     def markInputsChanged(self) -> None:
-        """The shown result no longer matches the Input tab."""
+        """The shown result no longer matches the Strand tab."""
         self.staleLabel.setVisible(self.output is not None)
 
     # -- showing a result ---------------------------------------------------------

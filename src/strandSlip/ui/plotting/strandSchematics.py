@@ -1,4 +1,4 @@
-"""The Input tab's schematics: the span between two posts, and the strand's section.
+"""The Strand tab's schematics: the span between two posts, and the strand's section.
 
 Drawings rather than charts: no grid or axes. The side view is true to scale
 along X, with the vertical exaggerated by the round factor the geometry chose,

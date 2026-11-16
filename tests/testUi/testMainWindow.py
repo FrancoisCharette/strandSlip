@@ -27,25 +27,30 @@ def testMainWindowOpens(qtbot) -> None:
     assert mainWindow.statusBar().currentMessage().startswith("Ready")
 
 
-def testOneTabForTheInputAndEachKindOfAnalysis(qtbot) -> None:
+def testTheTabsFollowTheThesis(qtbot) -> None:
+    """Strand, no slip, the two deflections, then the 1990 report that came before."""
     mainWindow = MainWindow()
     qtbot.addWidget(mainWindow)
 
     labels = [mainWindow.tabs.tabText(i) for i in range(mainWindow.tabs.count())]
     assert labels == [
-        "Input · ENTRE",
-        "Sinusoid · SINUS BSINUS NSINUS",
-        "Constant Curvature · RAYON",
-        "Friction · FRICTION",
-        "Displacement · DEPLACE",
-        "Thesis · Constant Curvature",
-        "Thesis · Sinusoid",
+        "Strand",
+        "No Slip",
+        "Constant Radius of Curvature",
+        "Sinusoidal Deflection",
+        "Bending Stiffness (1990 Report)",
     ]
-    programs = [p.key for view in mainWindow.analysisViews for p in view.programs]
-    assert programs == ["SINUS", "BSINUS", "NSINUS", "RAYON", "FRICTION", "DEPLACE"]
-    thesis = [p.key for view in mainWindow.thesisViews for p in view.programs]
-    assert thesis == ["HARDRHOB", "CONTRHOB", "ZETARHOB", "HARDSIN", "CONTSIN", "ZETASIN"]
-    assert "HARDRHOB, CONTRHOB, ZETARHOB" in mainWindow.tabs.tabToolTip(5)
+    tabs = [mainWindow.tabs.widget(i) for i in range(mainWindow.tabs.count())]
+    keys = [[p.key for p in view.programs] for view in tabs[1:]]
+    assert keys == [
+        ["DEPLACE", "FRICTION"],
+        ["HARDRHOB", "CONTRHOB", "ZETARHOB"],
+        ["HARDSIN", "CONTSIN", "ZETASIN"],
+        ["SINUS", "BSINUS", "NSINUS", "RAYON"],
+    ]
+    assert "HARDRHOB, CONTRHOB, ZETARHOB" in mainWindow.tabs.tabToolTip(2)
+    assert "SM-90-03" in mainWindow.tabs.tabToolTip(4)
+    assert "ENTRE" in mainWindow.tabs.tabToolTip(0)
 
 
 def testTheTabsInsideEveryPageAreMarkedTheQuieterWay(qtbot) -> None:
@@ -102,7 +107,7 @@ def testRunAndExportNeedAProgramTab(qtbot) -> None:
 
     assert mainWindow.tabs.currentWidget() is mainWindow.inputView
     assert not mainWindow.runAction.isEnabled()
-    mainWindow.tabs.setCurrentWidget(mainWindow.frictionView)
+    mainWindow.tabs.setCurrentWidget(mainWindow.noSlipView)
     assert mainWindow.runAction.isEnabled()
     assert mainWindow.exportLegacyAction.isEnabled()
 
@@ -110,21 +115,21 @@ def testRunAndExportNeedAProgramTab(qtbot) -> None:
 def testF5RunsTheProgramOfTheCurrentTab(qtbot) -> None:
     mainWindow = MainWindow()
     qtbot.addWidget(mainWindow)
-    mainWindow.tabs.setCurrentWidget(mainWindow.sinusoidView)
+    mainWindow.tabs.setCurrentWidget(mainWindow.stiffnessView)
 
     mainWindow.runAction.trigger()
-    qtbot.waitUntil(lambda: not mainWindow.sinusoidView.isRunning(), timeout=20000)
+    qtbot.waitUntil(lambda: not mainWindow.stiffnessView.isRunning(), timeout=20000)
 
-    output = mainWindow.sinusoidView.output
+    output = mainWindow.stiffnessView.output
     assert output is not None and output.result.program is SINUS
-    assert mainWindow.sinusoidView.tableModel.rowCount() == 101
+    assert mainWindow.stiffnessView.tableModel.rowCount() == 101
     assert mainWindow.statusBar().currentMessage().startswith("SINUS: 102 positions")
 
 
 def testLoadingAnExampleFromTheMenuFillsTheInputTab(qtbot) -> None:
     mainWindow = MainWindow()
     qtbot.addWidget(mainWindow)
-    mainWindow.tabs.setCurrentWidget(mainWindow.curvatureView)
+    mainWindow.tabs.setCurrentWidget(mainWindow.stiffnessView)
 
     mainWindow.examplesMenu.actions()[1].trigger()
 
@@ -135,7 +140,8 @@ def testLoadingAnExampleFromTheMenuFillsTheInputTab(qtbot) -> None:
 def testChangingAnInputMarksAShownResultAsStale(qtbot) -> None:
     mainWindow = MainWindow()
     qtbot.addWidget(mainWindow)
-    view = mainWindow.frictionView
+    view = mainWindow.noSlipView
+    view.programCombo.setCurrentIndex(1)  # FRICTION
     view.run()
     qtbot.waitUntil(lambda: not view.isRunning(), timeout=20000)
     assert view.staleLabel.isHidden()

@@ -10,6 +10,7 @@ shown under the form; the run's screen and results so far stay readable.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QTimer
@@ -29,11 +30,13 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from strandSlip.models.strandInput import StrandInput
 from strandSlip.models.thesisProgram import ThesisDeflection, ThesisProgramSpec
 from strandSlip.services import settingsService
 from strandSlip.services.analysisErrors import InputError
 from strandSlip.services.analysisWorker import AnalysisWorker
 from strandSlip.services.resultTableService import writeCsv
+from strandSlip.services.thesisParameters import thesisParameters
 from strandSlip.services.thesisRunner import legacyFiles, validationIssues, writeLegacyFiles
 from strandSlip.services.thesisTables import ThesisRunOutput, runAndPresentThesis
 from strandSlip.ui.plotting.thesisPlots import drawThesisResult, thesisChoices
@@ -70,10 +73,13 @@ class ThesisView(ReportingView):
         self,
         programs: tuple[ThesisProgramSpec, ...],
         deflection: ThesisDeflection,
+        strandProvider: Callable[[], StrandInput] | None = None,
         parent: QWidget | None = None,
     ) -> None:
+        """strandProvider: the Strand tab's values, for Use the Strand Tab's Values."""
         super().__init__(parent)
         self.programs = programs
+        self.strandProvider = strandProvider
         self.output: ThesisRunOutput | None = None
         self.worker: AnalysisWorker | None = None
         self.busyWith = ""
@@ -142,13 +148,38 @@ class ThesisView(ReportingView):
         buttons.addStretch()
         buttons.addWidget(self.exportLegacyButton)
         buttons.addWidget(self.exportCsvButton)
+        self.fromStrandButton = QPushButton("Use the Strand Tab's Values")
+        self.fromStrandButton.setObjectName("fromStrandButton")
+        self.fromStrandButton.setToolTip(
+            "Fill in the dimensionless answers from the strand on the Strand tab, "
+            "as chapter 5 of the thesis defines them (eqs. 5.7, 5.8, 5.10, 5.11)."
+        )
+        self.fromStrandButton.clicked.connect(self.useStrandValues)
+        self.fromStrandButton.setVisible(self.strandProvider is not None)
+        strandColumn = QVBoxLayout()
+        strandColumn.addWidget(self.fromStrandButton)
+        strandColumn.addStretch()
         formRow = QHBoxLayout()
         formRow.addWidget(self.form)
+        formRow.addLayout(strandColumn)
         formRow.addStretch()
         column = QVBoxLayout()
         column.addLayout(buttons)
         column.addLayout(formRow)
         return column
+
+    def useStrandValues(self) -> None:
+        """Chapter 5's ratios and γ1, from the strand the Strand tab describes."""
+        title = "Strand Values Not Used"
+        try:
+            filled = self.form.fillFromStrand(thesisParameters(self.strandProvider()))
+        except InputError as error:
+            self.reportError(title, f"The Strand tab cannot give them yet.\n{error}")
+            return
+        note = ""
+        if self.form.deflection is ThesisDeflection.sinusoid:
+            note = " The 1992 program asked for an even λ/p; the thesis uses 28."
+        self.reportStatus(f"From the Strand tab: {', '.join(filled)}.{note}")
 
     def buildBody(self) -> QSplitter:
         self.plotCombo = QComboBox()

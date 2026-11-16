@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
 from strandSlip.models.thesisInput import SinusoidChoice, ThesisInput
 from strandSlip.models.thesisProgram import ThesisDeflection, ThesisModel, ThesisProgramSpec
 from strandSlip.services.analysisErrors import InputError
+from strandSlip.services.thesisParameters import ThesisParameters
 
 choiceLabels = {
     SinusoidChoice.wholeWavelength: "1. Energy over the whole wavelength (θi = 90°)",
@@ -112,6 +113,28 @@ class ThesisInputForm(QGroupBox):
             edit.textEdited.connect(self.changed)
         self.profileCheck.toggled.connect(self.changed)
         self.choiceCombo.currentIndexChanged.connect(self.onChoiceChanged)
+
+    def fillFromStrand(self, parameters: ThesisParameters) -> list[str]:
+        """This deflection's ratios and γ1 from the Strand tab; what was filled, as text.
+
+        InputError when the strand lacks what this deflection needs.
+        """
+        if self.deflection is ThesisDeflection.constantRadius:
+            if parameters.radiusRatio is None:
+                raise InputError(["The amplitude field, read as the radius ρ, is 0."])
+            filled = [("ρ/ρc", self.radiusEdit, parameters.radiusRatio)]
+        else:
+            if parameters.waveRatio is None or parameters.amplitudeRatio is None:
+                raise InputError(["The wavelength λ is 0, so λ/p and A/Ac cannot be computed."])
+            filled = [
+                ("λ/p", self.wavelengthEdit, parameters.waveRatio),
+                ("A/Ac", self.amplitudeEdit, parameters.amplitudeRatio),
+            ]
+        filled.append(("γ1", self.complianceEdit, parameters.compliance))
+        for _name, edit, number in filled:
+            edit.setText(f"{number:.6g}")
+        self.changed.emit()
+        return [f"{name} = {number:.6g}" for name, _edit, number in filled]
 
     def _showRow(self, key: str, visible: bool) -> None:
         self.formLayout.setRowVisible(self.rows[key], visible)

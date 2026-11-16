@@ -1,4 +1,4 @@
-"""The Input tab: ENTRE's questions as one form."""
+"""The Strand tab: ENTRE's questions as one form."""
 
 from __future__ import annotations
 

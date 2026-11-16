@@ -1,4 +1,4 @@
-"""The Input tab's Schematics page: the strand between two posts, and its section.
+"""The Strand tab's Schematics page: the strand between two posts, and its section.
 
 Drawn from the values on the Numerical Entries page. The amplitude slot is A
 for the sinusoid programs and ρ for RAYON, so the page asks which deflection

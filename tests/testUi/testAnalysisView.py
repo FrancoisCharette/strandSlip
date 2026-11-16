@@ -97,7 +97,7 @@ def testAnUnreadableInputTabGoesToADialog(qtbot) -> None:
     qtbot.addWidget(view)
     with qtbot.waitSignal(view.errorMessage) as blocker:
         view.run()
-    assert "Fix the Input tab first" in blocker.args[1]
+    assert "Fix the Strand tab first" in blocker.args[1]
 
 
 def testAnAmplitudeGivenToRayonIsPointedOut(qtbot) -> None:

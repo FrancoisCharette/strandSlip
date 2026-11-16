@@ -1,4 +1,4 @@
-"""What the Input tab's schematics draw: the span between two posts, and the section.
+"""What the Strand tab's schematics draw: the span between two posts, and the section.
 
 Pure geometry from the ENTRE.DAT values, in metres; ui/plotting/strandSchematics
 draws it.

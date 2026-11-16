@@ -19,12 +19,14 @@ from strandSlip.models.analysisResults import (
 from strandSlip.models.legacyProgram import ENTRE, FRICTION, SINUS, Deflection
 from strandSlip.models.strandInput import StrandInput
 from strandSlip.services import inputValidation
+from strandSlip.services.analysisErrors import InputError
 from strandSlip.services.strandModel import (
     ConstantCurvatureDeflection,
     SinusoidalDeflection,
     computeStrandConstants,
     fullStickStiffness,
 )
+from strandSlip.services.thesisParameters import thesisParameters
 
 
 @dataclass(frozen=True)
@@ -77,6 +79,7 @@ def describeInput(value: StrandInput) -> list[ReportLine]:
                 "wires slip" if 0 < curvature.ratio < 1 else "no slip expected",
             ),
         ]
+    lines += _thesisLines(value)
     lines += [
         ReportLine("Step Along X", number(constants.positionStep, "m"), "DXPAS = CL/NPAS"),
         ReportLine(
@@ -90,6 +93,25 @@ def describeInput(value: StrandInput) -> list[ReportLine]:
             "FRICTION, DEPLACE",
         ),
     ]
+    return lines
+
+
+def _thesisLines(value: StrandInput) -> list[ReportLine]:
+    """The thesis parameters the 1990 programs did not need: λ/p and γ1 (chapter 5)."""
+    try:
+        parameters = thesisParameters(value)
+    except InputError:
+        return []
+    lines = []
+    if parameters.waveRatio is not None:
+        lines.append(
+            ReportLine(
+                "Lay Lengths per Wavelength λ/p", number(parameters.waveRatio), "thesis eq. 5.8"
+            )
+        )
+    lines.append(
+        ReportLine("Compliance Factor γ1", number(parameters.compliance), "thesis eq. 5.11")
+    )
     return lines
 
 

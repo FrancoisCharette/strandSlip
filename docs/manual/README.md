@@ -1,43 +1,48 @@
 # Strand Slip — user manual
 
-Strand Slip runs the seven Fortran programs of 1990 that computed the transverse stiffness
-of a strand — wires wound on a core, sticking to it or slipping — under an imposed deflection,
-and the six programs of the 1992 thesis that computed the energy a wire dissipates by slipping
-([the thesis tabs](#the-thesis-tabs-1992)). The numbers are the ones the old programs printed;
-the plots, tables and file handling are new.
+Strand Slip runs the six programs of the 1992 thesis *Analysis of the Damping Characteristics
+of a Stranded Cable under Vibration*, which compute the energy a wire dissipates by slipping on
+the core ([the thesis tabs](#the-thesis-tabs-1992)), and the seven programs of the 1990 report
+that came before it, which computed the transverse stiffness of a strand — wires wound on a
+core, sticking to it or slipping — under an imposed deflection. The numbers are the ones the old
+programs printed; the plots, tables and file handling are new.
 
-![The Sinusoid tab after running SINUS on the 1991 strand](images/sinusoid.png)
+![The Bending Stiffness tab after running SINUS on the 1991 strand](images/sinusoid.png)
 
 ## Getting started
 
 Launch it with `runApp.cmd` (or `strand-slip` in the project's virtual environment). It
-opens on the **Input** tab with the strand of the 1991 progress reports already filled in: 22
+opens on the **Strand** tab with the strand of the 1991 progress reports already filled in: 22
 aluminium wires on a 13.53 mm core, 643.5 N per wire, a sinusoidal deflection of 0.04 m over
-10 m. Go to the **Sinusoid** tab and press **Run SINUS** (or F5): at X = 2.5 m you get the
-stiffness the 1991 report printed, 1671.24 N·m².
+10 m — the strand of the thesis's own example (section 5.2). Go to the **Bending Stiffness (1990
+Report)** tab and press **Run SINUS** (or F5): at X = 2.5 m you get the stiffness the 1991 report
+printed, 1671.24 N·m². On the **Constant Radius of Curvature** tab, press **Run HARDRHOB** for
+the first row of the thesis's table 6.1(b).
 
 ## The tabs
 
-| Tab | Program(s) | Answers |
-|---|---|---|
-| Input · ENTRE | ENTRE | The fifteen values every program reads |
-| Sinusoid | SINUS, BSINUS, NSINUS | Stiffness EI along X for Y = A sin(2πX/λ) |
-| Constant Curvature | RAYON | Stiffness EI along X for a constant radius of curvature ρ |
-| Friction | FRICTION | Friction each wire needs to stay stuck (equation 19) |
-| Displacement | DEPLACE | Displacement of the core surface along each contact helix (equation 23) |
-| Thesis · Constant Curvature | HARDRHOB, CONTRHOB, ZETARHOB | One half lay length bent to a constant radius: slip regions, energy dissipated, displacement difference |
-| Thesis · Sinusoid | HARDSIN, CONTSIN, ZETASIN | The same along a sinusoid: energy over a wavelength, displacement difference at λ/4, or one half lay length |
+The tabs follow the thesis, chapter by chapter, and end with the earlier report.
 
-The Input tab feeds the 1990 programs only; the thesis tabs have their own answers.
+| Tab | Program(s) | Thesis | Answers |
+|---|---|---|---|
+| Strand | ENTRE | Chapters 1 and 5 | The fifteen values every program reads, drawings of the strand, and what follows from them: ρc, Ac, λ/p, γ1 |
+| No Slip | DEPLACE, FRICTION | Sections 1.2 and 2.2.1 | Displacement of the core surface along each contact line (equation 23); friction each wire needs to stay stuck (equation 19) |
+| Constant Radius of Curvature | HARDRHOB, CONTRHOB, ZETARHOB | Chapters 2 to 4, sections 6.1.1, 6.2.1, 6.3.1 | One half lay length bent to a constant radius: slip regions, energy dissipated, displacement difference |
+| Sinusoidal Deflection | HARDSIN, CONTSIN, ZETASIN | Chapters 2 to 4, sections 6.1.2, 6.2.2, 6.3.2 | The same along a sinusoid: energy over a wavelength, displacement difference at λ/4, or one half lay length |
+| Bending Stiffness (1990 Report) | SINUS, BSINUS, NSINUS, RAYON | Report SM-90-03, before the thesis | Stiffness EI along X, sinusoid or constant radius of curvature ρ |
+
+The No Slip and Bending Stiffness tabs run on the Strand tab's values. The thesis tabs take
+dimensionless answers, as the 1992 programs did; **Use the Strand Tab's Values** on those tabs
+fills them in from the strand, as chapter 5 defines them.
 
 The open tab is the one joined to the page below it: the page's colour, an indigo bar along its
 top and its label in bold, where the closed tabs sit back on a darker ground. The tabs inside a
 page (Table, Summary, Screen Output...) are marked the same way under a thinner bar. In a window
 too narrow for every label, the program tabs' labels end in "…"; widen it to read them whole.
 
-## The Input tab
+## The Strand tab
 
-![The Input tab](images/input.png)
+![The Strand tab](images/input.png)
 
 The tab has two pages: **Numerical Entries**, the form, and **Schematics**, the strand those
 values describe ([below](#schematics)). Example, Open and Save stay above both.
@@ -98,7 +103,8 @@ and saves it.
 
 ## Running a program
 
-Choose the program (on the Sinusoid tab: SINUS, BSINUS or NSINUS), press **Run** or F5. Long
+Choose the program (on the Bending Stiffness tab: SINUS, BSINUS, NSINUS or RAYON; on the No
+Slip tab: DEPLACE or FRICTION), press **Run** or F5. Long
 runs — NSINUS searches slip bounds ten times more finely — show a progress bar and can be
 stopped with **Stop** (Shift+F5). If you change the inputs after a run, an orange note says the
 shown result is out of date.
@@ -117,7 +123,7 @@ for every wire at every position, where slipping starts and ends.
   (red) or below −μL (blue).
 - **Wire Elongation** and **Required Friction**: one wire highlighted (choose it with **Wire**),
   the others in gray. Required Friction marks ±μL.
-- On the Displacement tab: the core displacement, and the two brackets of equation 23.
+- For DEPLACE, on the No Slip tab: the core displacement, and the two brackets of equation 23.
 
 Hover over a curve to read the nearest value. The toolbar above the plot pans, zooms and saves
 the figure.
@@ -163,11 +169,18 @@ give, the wire slips (macro-slip); the three models differ in what happens aroun
   cut into ten linear portions, so the wire micro-slips everywhere; up to ten regions each side
   of the macro-slip region.
 
-![The constant-curvature thesis tab after ZETARHOB at ρ/ρc = 0.8](images/thesis.png)
+![The Constant Radius of Curvature tab after ZETARHOB at ρ/ρc = 0.8](images/thesis.png)
 
 Everything is dimensionless, as in annex A of the thesis: positions ξ = X/p in lay lengths, the
 radius of curvature ρ/ρc, the amplitude A/Ac, the wavelength λ/p in lay lengths, the compliance
-factor γ1 (0.056 for the strand of the 1991 reports; the thesis uses 0.06).
+factor γ1 (0.05621 for the strand of the 1991 reports, section 5.2; the thesis uses 0.06).
+
+**Use the Strand Tab's Values** fills them in from the strand on the Strand tab, as chapter 5
+defines them: ρ/ρc (equation 5.7) on the radius tab, reading the amplitude field as ρ as RAYON
+does; λ/p and A/Ac (5.8, 5.10) on the sinusoid tab; γ1 (5.11) on both. The thesis takes one
+material for core and wires; the app uses the wires' modulus E and the core's Poisson ratio ν.
+The 1992 programs asked for an even λ/p; the button fills in the strand's own, 31.5 for the
+1991 strand, and the status bar says what it filled.
 
 ### Answering the program
 
@@ -223,13 +236,13 @@ the profile when its tab is selected).
 
 | Tab and program | Answers | Thesis |
 |---|---|---|
-| Constant Curvature, HARDRHOB | ρ/ρc = 0.8 | table 6.1(b): B1 = 0.14758, B2 = 0.35242, energy 0.003582 |
-| Constant Curvature, ZETARHOB | γ1 = 0.06, ρ/ρc = 0.8 | table 6.1(b): B1 = 0.15124, B2 = 0.34876 |
-| Constant Curvature, ZETARHOB | γ1 = 0.06, ρ/ρc = 0.6, approximation 0.05 | table 6.1(c): B1 = 0.05238 |
-| Sinusoid, HARDSIN | calculation 1, λ/p = 28, A/Ac = 1.3 | table 6.2(b): total 0.066745 |
-| Sinusoid, ZETASIN | calculation 1, λ/p = 28, A/Ac = 1.0, γ1 = 0.06 | table 6.2(a): total 0.019013 |
-| Sinusoid, ZETASIN | calculation 1, A/Ac = 1.3, approximations 0.149174136 0.205 | table 6.2(b): total 0.130465 |
-| Sinusoid, ZETASIN | calculation 3, A/Ac = 1.4, XTOUR = 6.5 | section 6.1.2: B1 − INF = 0.10224 |
+| Constant Radius of Curvature, HARDRHOB | ρ/ρc = 0.8 | table 6.1(b): B1 = 0.14758, B2 = 0.35242, energy 0.003582 |
+| Constant Radius of Curvature, ZETARHOB | γ1 = 0.06, ρ/ρc = 0.8 | table 6.1(b): B1 = 0.15124, B2 = 0.34876 |
+| Constant Radius of Curvature, ZETARHOB | γ1 = 0.06, ρ/ρc = 0.6, approximation 0.05 | table 6.1(c): B1 = 0.05238 |
+| Sinusoidal Deflection, HARDSIN | calculation 1, λ/p = 28, A/Ac = 1.3 | table 6.2(b): total 0.066745 |
+| Sinusoidal Deflection, ZETASIN | calculation 1, λ/p = 28, A/Ac = 1.0, γ1 = 0.06 | table 6.2(a): total 0.019013 |
+| Sinusoidal Deflection, ZETASIN | calculation 1, A/Ac = 1.3, approximations 0.149174136 0.205 | table 6.2(b): total 0.130465 |
+| Sinusoidal Deflection, ZETASIN | calculation 3, A/Ac = 1.4, XTOUR = 6.5 | section 6.1.2: B1 − INF = 0.10224 |
 
 ### What you will see that the 1992 programs also did
 

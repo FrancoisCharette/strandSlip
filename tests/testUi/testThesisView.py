@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from strandSlip.models.strandPresets import reportStrandCurvature, reportStrandSinusoid
 from strandSlip.models.thesisInput import SinusoidChoice
 from strandSlip.models.thesisProgram import (
     ThesisDeflection,
@@ -141,3 +142,48 @@ def testExportsWriteTheRunsFiles(qtbot, tmp_path: Path) -> None:
     view.detailTabs.setCurrentIndex(1)
     view.writeCsvTo(tmp_path / "profile.csv")
     assert (tmp_path / "profile.csv").read_text(encoding="utf-8").count("\n") == 502
+
+
+def strandView(qtbot, deflection: ThesisDeflection, strand) -> ThesisView:
+    programs = radiusPrograms if deflection is ThesisDeflection.constantRadius else sinusoidPrograms
+    view = ThesisView(programs, deflection, lambda: strand)
+    qtbot.addWidget(view)
+    return view
+
+
+def testTheRadiusTabTakesTheStrandTabsValues(qtbot) -> None:
+    """Chapter 5: ρ/ρc from the amplitude field read as ρ, and γ1 = 0.05621."""
+    view = strandView(qtbot, ThesisDeflection.constantRadius, reportStrandCurvature.input)
+    assert not view.fromStrandButton.isHidden()
+
+    with qtbot.waitSignal(view.statusMessage) as blocker:
+        view.fromStrandButton.click()
+
+    assert view.form.radiusEdit.text() == "0.538063"
+    assert view.form.complianceEdit.text() == "0.0562111"
+    assert "ρ/ρc = 0.538063" in blocker.args[0]
+    assert view.form.currentInput().radius == 0.538063
+
+
+def testTheSinusoidTabTakesTheStrandTabsValues(qtbot) -> None:
+    view = strandView(qtbot, ThesisDeflection.sinusoid, reportStrandSinusoid.input)
+
+    view.fromStrandButton.click()
+
+    assert view.form.wavelengthEdit.text() == "31.5192"
+    assert view.form.amplitudeEdit.text() == "1.46743"
+    assert view.form.complianceEdit.text() == "0.0562111"
+
+
+def testAStrandWithoutAWavelengthIsExplained(qtbot) -> None:
+    view = strandView(qtbot, ThesisDeflection.sinusoid, reportStrandCurvature.input)
+
+    with qtbot.waitSignal(view.errorMessage) as blocker:
+        view.fromStrandButton.click()
+
+    assert "λ is 0" in blocker.args[1]
+    assert view.form.wavelengthEdit.text() == "28"  # untouched
+
+
+def testWithoutAStrandThereIsNoButton(qtbot) -> None:
+    assert makeView(qtbot).fromStrandButton.isHidden()

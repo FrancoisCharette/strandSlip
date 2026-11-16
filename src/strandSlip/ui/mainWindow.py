@@ -1,4 +1,4 @@
-"""Main application window: the input tab and one tab per kind of analysis."""
+"""Main application window: one tab per part of the thesis, then the 1990 report."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from PySide6.QtGui import (
 from PySide6.QtWidgets import QMainWindow, QMessageBox
 
 from strandSlip import appConfig
-from strandSlip.models.legacyProgram import BSINUS, DEPLACE, FRICTION, NSINUS, RAYON, SINUS
+from strandSlip.models.legacyProgram import BSINUS, DEPLACE, ENTRE, FRICTION, NSINUS, RAYON, SINUS
 from strandSlip.models.strandPresets import allPresets
 from strandSlip.models.thesisProgram import (
     ThesisDeflection,
@@ -41,36 +41,34 @@ class MainWindow(QMainWindow):
         self.manualWorker: ManualWorker | None = None
         self.sourcesWorker: ManualWorker | None = None
 
+        # In the order of the thesis: the strand (chapters 1 and 5), the core
+        # surface before any slip (sections 1.2 and 2.2.1), the two deflections
+        # with their three models (chapters 2 to 4 and 6), then the 1990 report
+        # on bending stiffness, which came before it.
         self.inputView = InputView()
         provider = self.inputView.currentInput
-        self.sinusoidView = AnalysisView((SINUS, BSINUS, NSINUS), provider)
-        self.curvatureView = AnalysisView((RAYON,), provider)
-        self.frictionView = AnalysisView((FRICTION,), provider)
-        self.displacementView = AnalysisView((DEPLACE,), provider)
-        self.analysisViews = (
-            self.sinusoidView,
-            self.curvatureView,
-            self.frictionView,
-            self.displacementView,
+        self.noSlipView = AnalysisView((DEPLACE, FRICTION), provider)
+        self.thesisRadiusView = ThesisView(
+            radiusPrograms, ThesisDeflection.constantRadius, provider
         )
-        self.thesisRadiusView = ThesisView(radiusPrograms, ThesisDeflection.constantRadius)
-        self.thesisSinusoidView = ThesisView(sinusoidPrograms, ThesisDeflection.sinusoid)
+        self.thesisSinusoidView = ThesisView(sinusoidPrograms, ThesisDeflection.sinusoid, provider)
+        self.stiffnessView = AnalysisView((SINUS, BSINUS, NSINUS, RAYON), provider)
+        self.analysisViews = (self.noSlipView, self.stiffnessView)
         self.thesisViews = (self.thesisRadiusView, self.thesisSinusoidView)
 
         self.tabs = FullWidthTabWidget()
         self.tabs.setObjectName("programTabs")
-        self.tabs.addTab(self.inputView, "Input · ENTRE")
-        self.tabs.addTab(self.sinusoidView, "Sinusoid · SINUS BSINUS NSINUS")
-        self.tabs.addTab(self.curvatureView, "Constant Curvature · RAYON")
-        self.tabs.addTab(self.frictionView, "Friction · FRICTION")
-        self.tabs.addTab(self.displacementView, "Displacement · DEPLACE")
-        for view, label in (
-            (self.thesisRadiusView, "Thesis · Constant Curvature"),
-            (self.thesisSinusoidView, "Thesis · Sinusoid"),
+        for view, label, tip in (
+            (self.inputView, "Strand", "The strand ENTRE asked for: thesis chapters 1 and 5"),
+            (self.noSlipView, "No Slip", "Thesis sections 1.2 and 2.2.1, before any wire slips"),
+            (self.thesisRadiusView, "Constant Radius of Curvature", "Thesis chapters 2 to 4, 6"),
+            (self.thesisSinusoidView, "Sinusoidal Deflection", "Thesis chapters 2 to 4, 6"),
+            (self.stiffnessView, "Bending Stiffness (1990 Report)", "Report SM-90-03"),
         ):
             index = self.tabs.addTab(view, label)
-            keys = ", ".join(program.key for program in view.programs)
-            self.tabs.setTabToolTip(index, f"The 1992 thesis programs {keys}")
+            programs = getattr(view, "programs", (ENTRE,))
+            keys = ", ".join(program.key for program in programs)
+            self.tabs.setTabToolTip(index, f"{tip}. Programs: {keys}")
         self.tabs.currentChanged.connect(self.onTabChanged)
         self.setCentralWidget(self.tabs)
 

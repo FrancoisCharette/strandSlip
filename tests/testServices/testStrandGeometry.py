@@ -1,4 +1,4 @@
-"""What the Input tab's schematics draw, checked against the programs' own equations."""
+"""What the Strand tab's schematics draw, checked against the programs' own equations."""
 
 from __future__ import annotations
 

@@ -71,7 +71,7 @@ def _hint(name: str, value: float | int, strandLength: float | None) -> str:
 
 
 class InputView(ReportingView):
-    """The Input tab."""
+    """The Strand tab."""
 
     inputChanged = Signal()
 

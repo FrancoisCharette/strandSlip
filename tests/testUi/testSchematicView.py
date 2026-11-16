@@ -1,4 +1,4 @@
-"""The Input tab's two pages: the numerical entries, and the schematics drawn from them."""
+"""The Strand tab's two pages: the numerical entries, and the schematics drawn from them."""
 
 from __future__ import annotations
 
