@@ -35,22 +35,19 @@ appUserModelId = f"{organizationName}.StrandSlip"
 # Help > User Manual. The copy in the checkout is what a new app has, and it is
 # enough: the menu item works from the first run rather than being a promise.
 manualPath = projectRoot / "docs" / "manual" / "README.md"
-# Publishing is opt-in. Set this once the manual is pushed somewhere that
-# renders markdown - GitHub shows screenshots that a local .md opened in an
-# editor does not - and the published copy becomes the preferred one, with the
-# local copy as the offline fallback. Left empty it stays local and no network
-# request is made at all, which is the honest default: a new app has nothing
-# published yet, and deriving a URL from repoUrl would hand most apps an
-# address that 404s and a wait to discover it.
-#     manualUrl = f"{repoUrl}/blob/main/docs/manual/README.md"
-manualUrl = ""
-# How long to wait for the published copy before falling back to the local one.
+# The published copy, preferred: GitHub renders the screenshots that a local
+# .md opened in an editor does not. The local copy is the offline fallback.
+# Empty would keep it local with no network request at all.
+manualUrl = f"{repoUrl}/blob/main/docs/manual/README.md"
+# How long to wait for a published page before falling back to the local copy.
 manualTimeoutSeconds = 3.0
 
 # The seven 1990 Fortran programs this app revives, kept as they were found
 # (legacy/programmes), and the 1992 thesis programs recovered from the printed
-# manual (legacy/manuel1992). Help > Legacy Fortran Sources opens both.
+# manual (legacy/manuel1992). Help > Legacy Fortran Sources opens both: on
+# GitHub, which shows the READMEs beside the listings, or this folder offline.
 legacySourcesDir = projectRoot / "legacy"
+legacySourcesUrl = f"{repoUrl}/tree/main/legacy"
 
 appDataDir = Path(os.environ.get("APPDATA", str(Path.home()))) / appName
 settingsFile = appDataDir / "settings.ini"

@@ -242,12 +242,17 @@ def testTheStubManualShipsWithTheTemplate() -> None:
     assert appConfig.manualPath.read_text(encoding="utf-8").strip()
 
 
-def testNothingIsPublishedUntilTheAuthorSaysSo() -> None:
-    """A new app has no manual online, so the default must not pretend it has."""
-    assert appConfig.manualUrl == ""
+def testTheHelpPagesArePublishedInThisRepo() -> None:
+    """Each published page is the same file in the repo as its local fallback."""
+    base = f"{appConfig.repoUrl}/"
+    manual = appConfig.manualPath.relative_to(appConfig.projectRoot).as_posix()
+    sources = appConfig.legacySourcesDir.relative_to(appConfig.projectRoot).as_posix()
+    assert appConfig.repoUrl == "https://github.com/FrancoisCharette/strandSlip"
+    assert appConfig.manualUrl == f"{base}blob/main/{manual}"
+    assert appConfig.legacySourcesUrl == f"{base}tree/main/{sources}"
 
 
-def testTheLocalCopyIsOpenedWhenNothingIsPublished(qtbot, monkeypatch) -> None:
+def testTheLocalManualOpensOffline(qtbot, monkeypatch) -> None:
     mainWindow = MainWindow()
     qtbot.addWidget(mainWindow)
     opened = openedUrls(monkeypatch)
@@ -288,11 +293,12 @@ def testAMissingManualLeavesTheReaderAnAddress(qtbot, monkeypatch, tmp_path) -> 
     mainWindow.openManual(publishedIsReachable=False)
 
     assert shown and "gone.md" in shown[0]
-    assert "nothing published" in shown[0]
+    assert appConfig.manualUrl in shown[0]
 
 
 def testTheCheckRunsOffTheInterfaceThread(qtbot, monkeypatch) -> None:
     """A network probe can hang until its timeout; the window must not."""
+    monkeypatch.setattr(appConfig, "manualUrl", "")  # the threading, not the network
     mainWindow = MainWindow()
     qtbot.addWidget(mainWindow)
     openedUrls(monkeypatch)
@@ -306,3 +312,58 @@ def testTheCheckRunsOffTheInterfaceThread(qtbot, monkeypatch) -> None:
     mainWindow.manualWorker.wait(5000)
     qtbot.waitUntil(lambda: mainWindow.manualWorker is None, timeout=5000)
     assert mainWindow.manualAction.isEnabled()
+
+
+def testTheLegacySourcesOpenOnGitHubWhenItAnswers(qtbot, monkeypatch) -> None:
+    mainWindow = MainWindow()
+    qtbot.addWidget(mainWindow)
+    opened = openedUrls(monkeypatch)
+
+    mainWindow.openLegacySources(publishedIsReachable=True)
+
+    assert opened == [appConfig.legacySourcesUrl]
+    assert "browser" in mainWindow.statusBar().currentMessage()
+
+
+def testTheLocalLegacyFolderOpensOffline(qtbot, monkeypatch) -> None:
+    mainWindow = MainWindow()
+    qtbot.addWidget(mainWindow)
+    opened = openedUrls(monkeypatch)
+
+    mainWindow.openLegacySources(publishedIsReachable=False)
+
+    assert len(opened) == 1 and opened[0].startswith("file:")
+    assert opened[0].endswith("/legacy")
+    assert "local copy" in mainWindow.statusBar().currentMessage()
+
+
+def testMissingLegacySourcesLeaveTheReaderBothAddresses(qtbot, monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(appConfig, "legacySourcesDir", tmp_path / "gone")
+    mainWindow = MainWindow()
+    qtbot.addWidget(mainWindow)
+    openedUrls(monkeypatch)
+    shown: list[str] = []
+    monkeypatch.setattr(
+        "strandSlip.ui.mainWindow.QMessageBox.information",
+        lambda parent, title, text: shown.append(text),
+    )
+
+    mainWindow.openLegacySources(publishedIsReachable=False)
+
+    assert shown and "gone" in shown[0] and appConfig.legacySourcesUrl in shown[0]
+
+
+def testTheLegacyCheckRunsOffTheInterfaceThread(qtbot, monkeypatch) -> None:
+    monkeypatch.setattr(appConfig, "legacySourcesUrl", "")  # the threading, not the network
+    mainWindow = MainWindow()
+    qtbot.addWidget(mainWindow)
+    openedUrls(monkeypatch)
+
+    with qtbot.waitSignal(mainWindow.sourcesAction.changed, timeout=5000):
+        mainWindow.onOpenLegacySources()
+    assert not mainWindow.sourcesAction.isEnabled()
+
+    assert mainWindow.sourcesWorker is not None
+    mainWindow.sourcesWorker.wait(5000)
+    qtbot.waitUntil(lambda: mainWindow.sourcesWorker is None, timeout=5000)
+    assert mainWindow.sourcesAction.isEnabled()

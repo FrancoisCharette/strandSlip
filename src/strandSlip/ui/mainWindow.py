@@ -39,6 +39,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(appConfig.windowTitle)
         self.resize(appConfig.defaultWindowWidth, appConfig.defaultWindowHeight)
         self.manualWorker: ManualWorker | None = None
+        self.sourcesWorker: ManualWorker | None = None
 
         self.inputView = InputView()
         provider = self.inputView.currentInput
@@ -219,15 +220,42 @@ class MainWindow(QMainWindow):
             self.showStatus(f"{theme.capitalize()} theme applied.")
 
     def onOpenLegacySources(self) -> None:
+        """The sources on GitHub when it answers, else the folder in this checkout.
+
+        Asked off this thread, as for the manual: the probe can hang until its
+        timeout.
+        """
+        if self.sourcesWorker is not None:
+            return
+        self.sourcesAction.setEnabled(False)
+        self.showStatus("Looking for the legacy sources...")
+        worker = ManualWorker(parent=self, url=appConfig.legacySourcesUrl)
+        worker.resolved.connect(self.openLegacySources)
+        worker.finished.connect(self.onSourcesCheckFinished)
+        self.sourcesWorker = worker
+        worker.start()
+
+    def openLegacySources(self, publishedIsReachable: bool) -> None:
+        url = appConfig.legacySourcesUrl
+        if publishedIsReachable and QDesktopServices.openUrl(QUrl(url)):
+            self.showStatus("The legacy sources are opening in your browser.")
+            return
         folder = appConfig.legacySourcesDir
         if folder.is_dir() and QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder))):
-            self.showStatus(f"Opening {folder}")
+            self.showStatus(f"Opening the local copy, {folder}")
             return
         QMessageBox.information(
             self,
             "Legacy Fortran Sources",
-            f"The 1990 originals (.FOR and .EXE) and the 1992 listings are in:\n\n{folder}",
+            "The 1990 originals (.FOR and .EXE) and the 1992 listings are at:\n\n"
+            f"{url}\n\n{folder}",
         )
+
+    def onSourcesCheckFinished(self) -> None:
+        if self.sourcesWorker is not None:
+            self.sourcesWorker.deleteLater()
+            self.sourcesWorker = None
+        self.sourcesAction.setEnabled(True)
 
     def onHelpManual(self) -> None:
         """Open the manual, preferring the published copy when there is one.
@@ -274,8 +302,9 @@ class MainWindow(QMainWindow):
         # A thread running into interpreter shutdown turns a clean exit into a crash.
         for view in (*self.analysisViews, *self.thesisViews):
             view.shutdown()
-        if self.manualWorker is not None:
-            self.manualWorker.wait(int(appConfig.manualTimeoutSeconds * 1000) + 1000)
+        for worker in (self.manualWorker, self.sourcesWorker):
+            if worker is not None:
+                worker.wait(int(appConfig.manualTimeoutSeconds * 1000) + 1000)
         super().closeEvent(event)
 
     def onHelpAbout(self) -> None:

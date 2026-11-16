@@ -81,7 +81,9 @@ strand-slip
 ```
 
 Or `python -m strandSlip.main`, or double-click **`runApp.cmd`**. The user manual is under
-**Help > User Manual** (F1), from [`docs/manual/README.md`](docs/manual/README.md).
+**Help > User Manual** (F1): [`docs/manual/README.md`](docs/manual/README.md) as GitHub shows
+it in this repository, or the copy in the checkout when GitHub does not answer within 3 s.
+**Help > Legacy Fortran Sources** opens [`legacy/`](legacy/) the same way.
 
 ## Tests and lint
 

@@ -248,4 +248,6 @@ the profile when its tab is selected).
 Failures open a dialog with the whole explanation; the status bar holds a one-line summary.
 "*PROGRAM* Did Not Run" lists every input it cannot use and why. A thesis program that stops to
 ask a question is not a failure: the question is on the tab. The original sources — the 1990
-files and the 1992 listings — are under **Help > Legacy Fortran Sources**.
+files and the 1992 listings — are under **Help > Legacy Fortran Sources**. That item and
+**Help > User Manual** open the pages in the app's GitHub repository,
+github.com/FrancoisCharette/strandSlip, or the copies on this computer when there is no network.
