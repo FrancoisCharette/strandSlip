@@ -9,9 +9,22 @@ programs printed; the plots, tables and file handling are new.
 
 ![The Bending Stiffness tab after running SINUS on the 1991 strand](images/sinusoid.png)
 
+## Installing
+
+Download the latest release from
+[github.com/FrancoisCharette/strandSlip/releases](https://github.com/FrancoisCharette/strandSlip/releases)
+and run `strandSlipSetup-<version>.exe`. It installs for you alone, without asking for
+administrator rights, and adds Strand Slip to the Start menu. If you would rather not install
+anything, unzip `StrandSlip-<version>-portable.zip` anywhere and run `StrandSlip.exe`.
+
+The installer is not signed, so Windows SmartScreen may warn about an unrecognised app the first
+time: choose **More info**, then **Run anyway**. Installing a newer version replaces the old
+one; your settings are kept separately and survive upgrading or uninstalling.
+
 ## Getting started
 
-Launch it with `runApp.cmd` (or `strand-slip` in the project's virtual environment). It
+Launch it from the Start menu, with `runApp.cmd` in a checkout, or `strand-slip` in the
+project's virtual environment. It
 opens on the **Strand** tab with the strand of the 1991 progress reports already filled in: 22
 aluminium wires on a 13.53 mm core, 643.5 N per wire, a sinusoidal deflection of 0.04 m over
 10 m — the strand of the thesis's own example (section 5.2). Go to the **Bending Stiffness (1990

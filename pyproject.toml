@@ -2,6 +2,7 @@
 name = "strand-slip"
 version = "0.1.0"
 description = "Revival of the 1990 Fortran strand-stiffness programs (SINUS, BSINUS, NSINUS, RAYON, FRICTION, DEPLACE, ENTRE) and the six 1992 thesis programs (HARDRHOB, CONTRHOB, ZETARHOB, HARDSIN, CONTSIN, ZETASIN) as a PySide6 desktop app"
+license = { text = "MIT" }
 requires-python = ">=3.14"
 dependencies = [
     "PySide6>=6.6,<7",
@@ -14,6 +15,11 @@ dev = [
     "pytest>=8.0,<9",
     "pytest-qt>=4.4,<5",
     "ruff>=0.4,<1",
+]
+# Only needed to produce a standalone build; see tools/buildExe.py. Kept out
+# of dev so a checkout that only runs the app and the tests stays smaller.
+build = [
+    "pyinstaller>=6.16,<7",
 ]
 
 [project.scripts]

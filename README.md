@@ -96,6 +96,35 @@ pytest
 ruff check src tests
 ```
 
+## Standalone build and releases
+
+`.github/workflows/build.yml` builds the Windows app on every push, as Wager Book's does: it runs
+the tests and ruff, then `tools/buildExe.py` (PyInstaller, `strandSlip.spec`, one folder),
+which checks that the icon, the manual and the legacy sources landed in the bundle and runs the
+built `StrandSlip.exe --selftest`. That builds the window offscreen and runs SINUS and HARDRHOB
+on the examples, since a windowed build has no console to say it failed. `tools/buildInstaller.py`
+then compiles a per-user Inno Setup installer (`installer/strandSlip.iss`), and the bundle is
+also zipped as a portable copy. Both are kept as the run's artifacts.
+
+To publish a release, raise `appVersion` in `appConfig.py` (and the copies in `pyproject.toml`
+and `src/strandSlip/__init__.py`, which a test keeps in step), commit, and push a tag:
+
+```powershell
+git tag -a v0.2.0 -m "What changed"
+git push origin v0.2.0
+```
+
+The workflow refuses a tag that differs from `appConfig.appVersion`, and attaches
+`strandSlipSetup-<version>.exe` and `StrandSlip-<version>-portable.zip` to a GitHub Release
+whose notes are the tag's message. To build locally (needs Inno Setup 6:
+`winget install JRSoftware.InnoSetup`):
+
+```powershell
+pip install -e ".[build]"
+python tools/buildExe.py
+python tools/buildInstaller.py
+```
+
 ## App icon
 
 The icon is the section of a strand, a steel core ringed by aluminium wires, with one wire in
@@ -148,6 +177,10 @@ And for the 1992 programs:
 | `thesisRunner`, `thesisTables` | Run, refuse impossible inputs, export; tables and summary |
 
 See `AGENTS.md` for architecture and naming conventions.
+
+## License
+
+[MIT](LICENSE), copyright Charette AI Group, LLC. The installer shows it before installing.
 
 ---
 *Created from the Qt App Template.*
