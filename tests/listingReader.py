@@ -12,7 +12,7 @@ import re
 from collections.abc import Iterator
 from pathlib import Path
 
-from masterRebuild import appConfig
+from strandSlip import appConfig
 
 listingRoot = appConfig.projectRoot / "legacy" / "manuel1992"
 

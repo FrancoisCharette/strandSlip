@@ -6,13 +6,13 @@ from pathlib import Path
 
 import pytest
 
-from masterRebuild.models.thesisInput import SinusoidChoice
-from masterRebuild.models.thesisProgram import (
+from strandSlip.models.thesisInput import SinusoidChoice
+from strandSlip.models.thesisProgram import (
     ThesisDeflection,
     radiusPrograms,
     sinusoidPrograms,
 )
-from masterRebuild.ui.views.thesisView import ThesisView
+from strandSlip.ui.views.thesisView import ThesisView
 
 
 def makeView(qtbot, sinusoid: bool = False) -> ThesisView:

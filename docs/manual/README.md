@@ -1,6 +1,6 @@
-# Master Rebuild — user manual
+# Strand Slip — user manual
 
-Master Rebuild runs the seven Fortran programs of 1990 that computed the transverse stiffness
+Strand Slip runs the seven Fortran programs of 1990 that computed the transverse stiffness
 of a strand — wires wound on a core, sticking to it or slipping — under an imposed deflection,
 and the six programs of the 1992 thesis that computed the energy a wire dissipates by slipping
 ([the thesis tabs](#the-thesis-tabs-1992)). The numbers are the ones the old programs printed;
@@ -10,7 +10,7 @@ the plots, tables and file handling are new.
 
 ## Getting started
 
-Launch it with `runApp.cmd` (or `master-rebuild` in the project's virtual environment). It
+Launch it with `runApp.cmd` (or `strand-slip` in the project's virtual environment). It
 opens on the **Input** tab with the strand of the 1991 progress reports already filled in: 22
 aluminium wires on a 13.53 mm core, 643.5 N per wire, a sinusoidal deflection of 0.04 m over
 10 m. Go to the **Sinusoid** tab and press **Run SINUS** (or F5): at X = 2.5 m you get the
@@ -30,9 +30,17 @@ stiffness the 1991 report printed, 1671.24 N·m².
 
 The Input tab feeds the 1990 programs only; the thesis tabs have their own answers.
 
+The open tab is the one joined to the page below it: the page's colour, an indigo bar along its
+top and its label in bold, where the closed tabs sit back on a darker ground. The tabs inside a
+page (Table, Summary, Screen Output...) are marked the same way under a thinner bar. In a window
+too narrow for every label, the program tabs' labels end in "…"; widen it to read them whole.
+
 ## The Input tab
 
 ![The Input tab](images/input.png)
+
+The tab has two pages: **Numerical Entries**, the form, and **Schematics**, the strand those
+values describe ([below](#schematics)). Example, Open and Save stay above both.
 
 The fields are ENTRE.EXE's fifteen questions, in SI units as the programs expected: metres,
 pascals, newtons, radians. Hover over a field to read the question ENTRE asked. Next to each
@@ -61,6 +69,32 @@ Two things the old input file did that still apply:
   RAYON with an amplitude in that field, the status bar says so.
 - **The step along X is CL/NPAS**, the strand length divided by the number of positions — not
   the span from start to end divided by anything. The hint next to Number of Positions shows it.
+
+### Schematics
+
+![The Schematics page for the 1991 strand](images/schematics.png)
+
+The second page draws the strand from the values on the first, and redraws when they change:
+
+- **Side view.** The whole strand length L = CL between two posts, under the tension T_i in each
+  wire. The deflection is the programs' own: Y = A sin(2πX/λ) for SINUS, BSINUS, NSINUS,
+  FRICTION and DEPLACE. For RAYON it is the curvature 1/ρ of Y = −X²/2ρ, drawn as the arc
+  through both posts, since only the curvature enters RAYON's equations. A deflection of
+  centimetres on a span of metres would be a flat line, so the vertical is drawn taller by the
+  round factor given at the top right (×10 for the 1991 strand). Hover over the strand to read
+  the true Y at any X. Under the ground are the positions where SINUS and RAYON compute: a tick
+  for each, or a band when there are more than 150.
+- **Section** at X = 0, seen along X, at true scale. The wires are numbered as THETA(I) numbers
+  them, wire 1 on the Z axis, which are the numbers on the slip map's Wire axis. A wire crosses
+  the section at its helix angle, so it is drawn as an ellipse: R_F across, R_F / cos α_c along
+  the circle. α_c is the helix angle at the wire axes, steeper than α at the core since the lay
+  length is the same at both radii. If the wires cannot all fit side by side around the core,
+  the page says so in red.
+
+**Deflection Drawn** chooses between the sinusoid and the constant curvature, since the
+amplitude field holds A for one and ρ for the other. Loading an example or a file chooses the one
+it was written for: ENTRE wrote a zero wavelength for RAYON. The toolbar above the drawing zooms
+and saves it.
 
 ## Running a program
 

@@ -16,4 +16,4 @@ if not exist "%VENV_PYW%" (
     exit /b 1
 )
 
-start "" "%VENV_PYW%" -m masterRebuild.main
+start "" "%VENV_PYW%" -m strandSlip.main

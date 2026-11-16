@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from masterRebuild.ui.mainWindow import MainWindow
-from masterRebuild.ui.widgets.reportingView import ReportingView
+from strandSlip.ui.mainWindow import MainWindow
+from strandSlip.ui.widgets.reportingView import ReportingView
 
 longFailure = (
     "The device did not answer. The usual cause is another application holding "

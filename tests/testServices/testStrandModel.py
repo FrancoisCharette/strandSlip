@@ -8,8 +8,8 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
-from masterRebuild.models.strandPresets import reportStrandSinusoid
-from masterRebuild.services.strandModel import (
+from strandSlip.models.strandPresets import reportStrandSinusoid
+from strandSlip.services.strandModel import (
     ConstantCurvatureDeflection,
     SinusoidalDeflection,
     computeStrandConstants,

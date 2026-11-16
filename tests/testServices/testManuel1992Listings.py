@@ -16,7 +16,7 @@ import pytest
 
 from listingReader import listingRoot as root
 from listingReader import statements
-from masterRebuild import appConfig
+from strandSlip import appConfig
 
 directories = {
     "RAYON/HARDY": "HARDRHOB",

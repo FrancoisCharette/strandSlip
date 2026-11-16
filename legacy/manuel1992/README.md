@@ -66,5 +66,5 @@ not all set the same way (`VECB` and `JACOB` for the constant radius, `SORTIE`, 
 constant radius' (`GAM1`, `RHOB`, `THETAi`) commented out below it. The port writes the latter
 for ZETARHOB; every other routine reads only `PI` from the block either way.
 
-The Python port is in `src/masterRebuild/services/`; [`docs/legacyPort.md`](../../docs/legacyPort.md)
+The Python port is in `src/strandSlip/services/`; [`docs/legacyPort.md`](../../docs/legacyPort.md)
 explains what was kept, what could not be, and how it was checked.

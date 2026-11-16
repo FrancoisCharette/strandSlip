@@ -7,8 +7,8 @@ from dataclasses import replace
 
 import pytest
 
-from masterRebuild.models.strandPresets import allPresets, reportStrandSinusoid
-from masterRebuild.services.entreFileService import (
+from strandSlip.models.strandPresets import allPresets, reportStrandSinusoid
+from strandSlip.services.entreFileService import (
     EntreFileError,
     formatEntreText,
     parseEntreText,

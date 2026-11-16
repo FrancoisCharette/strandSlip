@@ -1,7 +1,7 @@
 # Porting notes: the 1990 and 1992 Fortran programs
 
 How `legacy/programmes/*.FOR` (1990) and `legacy/manuel1992/` (1992) became
-`src/masterRebuild/services/`, what was kept on purpose, what was not, and how the port was
+`src/strandSlip/services/`, what was kept on purpose, what was not, and how the port was
 checked. For maintainers; users want [`manual/README.md`](manual/README.md). The 1992 programs
 are [further down](#the-1992-thesis-programs).
 

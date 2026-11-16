@@ -7,12 +7,12 @@ from dataclasses import replace
 
 import numpy as np
 
-from masterRebuild.models.legacyProgram import SINUS
-from masterRebuild.models.strandPresets import reportStrandSinusoid
-from masterRebuild.services.displacementService import runDisplacement
-from masterRebuild.services.frictionService import runFriction
-from masterRebuild.services.resultTableService import resultTable, writeCsv
-from masterRebuild.services.stiffnessService import runStiffness
+from strandSlip.models.legacyProgram import SINUS
+from strandSlip.models.strandPresets import reportStrandSinusoid
+from strandSlip.services.displacementService import runDisplacement
+from strandSlip.services.frictionService import runFriction
+from strandSlip.services.resultTableService import resultTable, writeCsv
+from strandSlip.services.stiffnessService import runStiffness
 
 example = replace(reportStrandSinusoid.input, xEnd=1.0)
 

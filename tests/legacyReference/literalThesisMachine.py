@@ -16,7 +16,7 @@ from __future__ import annotations
 import math
 import struct
 
-from masterRebuild.services.fortranFormat import formatRecord, keepsLineOpen
+from strandSlip.services.fortranFormat import formatRecord, keepsLineOpen
 
 
 def real4(value: float) -> float:

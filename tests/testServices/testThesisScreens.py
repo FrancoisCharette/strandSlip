@@ -14,8 +14,8 @@ import re
 import pytest
 
 from listingReader import listingRoot, statements
-from masterRebuild.services import thesisScreens
-from masterRebuild.services.fortranFormat import FormatItem, parseFormat
+from strandSlip.services import thesisScreens
+from strandSlip.services.fortranFormat import FormatItem, parseFormat
 
 
 def characterConstant(text: str) -> str:

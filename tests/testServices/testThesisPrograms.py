@@ -16,10 +16,10 @@ from legacyReference.literalThesisComplianceSinus import ZETASIN
 from legacyReference.literalThesisMachine import NeedAnswer
 from legacyReference.literalThesisRadius import CONTRHOB, HARDRHOB
 from legacyReference.literalThesisSinus import CONTSIN, HARDSIN
-from masterRebuild.models.thesisInput import SinusoidChoice, ThesisInput
-from masterRebuild.models.thesisProgram import thesisProgramByKey
-from masterRebuild.services.thesisRunner import runThesisProgram
-from masterRebuild.services.thesisSession import typedText
+from strandSlip.models.thesisInput import SinusoidChoice, ThesisInput
+from strandSlip.models.thesisProgram import thesisProgramByKey
+from strandSlip.services.thesisRunner import runThesisProgram
+from strandSlip.services.thesisSession import typedText
 
 oracles = {
     "HARDRHOB": HARDRHOB,

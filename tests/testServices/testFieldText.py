@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from masterRebuild.models.strandInput import FieldKind
-from masterRebuild.services.fieldText import FieldTextError, formatFieldValue, parseFieldText
+from strandSlip.models.strandInput import FieldKind
+from strandSlip.services.fieldText import FieldTextError, formatFieldValue, parseFieldText
 
 
 @pytest.mark.parametrize(

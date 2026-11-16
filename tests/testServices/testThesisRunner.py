@@ -6,23 +6,23 @@ from pathlib import Path
 
 import pytest
 
-from masterRebuild.models.thesisInput import SinusoidChoice, ThesisInput
-from masterRebuild.models.thesisProgram import (
+from strandSlip.models.thesisInput import SinusoidChoice, ThesisInput
+from strandSlip.models.thesisProgram import (
     HARDRHOB,
     HARDSIN,
     ZETARHOB,
     ZETASIN,
     allThesisPrograms,
 )
-from masterRebuild.services.analysisErrors import AnalysisError, InputError
-from masterRebuild.services.thesisRunner import (
+from strandSlip.services.analysisErrors import AnalysisError, InputError
+from strandSlip.services.thesisRunner import (
     legacyFiles,
     runThesisProgram,
     thesisScreenText,
     validationIssues,
     writeLegacyFiles,
 )
-from masterRebuild.services.thesisSession import ThesisSession, typedText
+from strandSlip.services.thesisSession import ThesisSession, typedText
 
 
 def testTypedTextReadsBackTheSameValue() -> None:

@@ -6,12 +6,12 @@ from dataclasses import replace
 
 import pytest
 
-from masterRebuild.models.legacyProgram import BSINUS, NSINUS, RAYON, SINUS
-from masterRebuild.models.strandPresets import reportStrandCurvature, reportStrandSinusoid
-from masterRebuild.services import legacyOutputService
-from masterRebuild.services.displacementService import runDisplacement
-from masterRebuild.services.frictionService import runFriction
-from masterRebuild.services.stiffnessService import runStiffness
+from strandSlip.models.legacyProgram import BSINUS, NSINUS, RAYON, SINUS
+from strandSlip.models.strandPresets import reportStrandCurvature, reportStrandSinusoid
+from strandSlip.services import legacyOutputService
+from strandSlip.services.displacementService import runDisplacement
+from strandSlip.services.frictionService import runFriction
+from strandSlip.services.stiffnessService import runStiffness
 
 example = reportStrandSinusoid.input
 

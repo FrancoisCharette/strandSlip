@@ -6,7 +6,7 @@ import pytest
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 
-from masterRebuild import appConfig
+from strandSlip import appConfig
 
 
 @pytest.fixture(scope="session")

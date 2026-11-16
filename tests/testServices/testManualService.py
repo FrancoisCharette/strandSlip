@@ -6,8 +6,8 @@ import urllib.error
 
 import pytest
 
-from masterRebuild import appConfig
-from masterRebuild.services.manualService import ManualService
+from strandSlip import appConfig
+from strandSlip.services.manualService import ManualService
 
 publishedUrl = "https://example.invalid/manual"
 

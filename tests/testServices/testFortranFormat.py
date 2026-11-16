@@ -7,8 +7,8 @@ from decimal import ROUND_HALF_UP, Context, Decimal, localcontext
 
 import pytest
 
-from masterRebuild.services import fortranFormat
-from masterRebuild.services.fortranFormat import (
+from strandSlip.services import fortranFormat
+from strandSlip.services.fortranFormat import (
     FortranFormatError,
     formatExponent,
     formatFixed,

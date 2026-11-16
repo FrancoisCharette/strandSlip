@@ -12,8 +12,8 @@ import math
 
 import pytest
 
-from masterRebuild.models.thesisInput import SinusoidChoice, ThesisInput
-from masterRebuild.models.thesisProgram import (
+from strandSlip.models.thesisInput import SinusoidChoice, ThesisInput
+from strandSlip.models.thesisProgram import (
     CONTRHOB,
     CONTSIN,
     HARDRHOB,
@@ -21,7 +21,7 @@ from masterRebuild.models.thesisProgram import (
     ZETARHOB,
     ZETASIN,
 )
-from masterRebuild.services.thesisRunner import runThesisProgram
+from strandSlip.services.thesisRunner import runThesisProgram
 
 whole, ratio, one = (
     SinusoidChoice.wholeWavelength,

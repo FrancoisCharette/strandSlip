@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 from PySide6.QtCore import Qt
 
-from masterRebuild.services import themeService
+from strandSlip.services import themeService
 
 
 class StubStyleHints:

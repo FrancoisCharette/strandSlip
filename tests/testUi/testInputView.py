@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from masterRebuild.models.strandPresets import reportStrandCurvature, reportStrandSinusoid
-from masterRebuild.services.analysisErrors import InputError
-from masterRebuild.services.entreFileService import formatEntreText, readEntreFile
-from masterRebuild.ui.views.inputView import InputView
+from strandSlip.models.strandPresets import reportStrandCurvature, reportStrandSinusoid
+from strandSlip.services.analysisErrors import InputError
+from strandSlip.services.entreFileService import formatEntreText, readEntreFile
+from strandSlip.ui.views.inputView import InputView
 
 
 def makeView(qtbot) -> InputView:

@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
+import pytest
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QKeySequence
+from PySide6.QtWidgets import QApplication
 
-from masterRebuild import appConfig
-from masterRebuild.models.legacyProgram import SINUS
-from masterRebuild.models.strandPresets import reportStrandCurvature
-from masterRebuild.services import themeService
-from masterRebuild.ui.mainWindow import MainWindow
+from strandSlip import appConfig
+from strandSlip.models.legacyProgram import SINUS
+from strandSlip.models.strandPresets import reportStrandCurvature
+from strandSlip.services import themeService
+from strandSlip.ui.mainWindow import MainWindow
+from strandSlip.ui.widgets.fullWidthTabWidget import FullWidthTabWidget
+from strandSlip.ui.widgets.pageTabWidget import PageTabWidget
 
 
 def testMainWindowOpens(qtbot) -> None:
@@ -19,7 +23,7 @@ def testMainWindowOpens(qtbot) -> None:
 
     assert mainWindow.isVisible()
     assert mainWindow.windowTitle() == appConfig.windowTitle
-    assert mainWindow.windowTitle().startswith("Master Rebuild")
+    assert mainWindow.windowTitle().startswith("Strand Slip")
     assert mainWindow.statusBar().currentMessage().startswith("Ready")
 
 
@@ -42,6 +46,16 @@ def testOneTabForTheInputAndEachKindOfAnalysis(qtbot) -> None:
     thesis = [p.key for view in mainWindow.thesisViews for p in view.programs]
     assert thesis == ["HARDRHOB", "CONTRHOB", "ZETARHOB", "HARDSIN", "CONTSIN", "ZETASIN"]
     assert "HARDRHOB, CONTRHOB, ZETARHOB" in mainWindow.tabs.tabToolTip(5)
+
+
+def testTheTabsInsideEveryPageAreMarkedTheQuieterWay(qtbot) -> None:
+    """Table / Summary / Screen Output show their open tab too, under a thinner bar."""
+    mainWindow = MainWindow()
+    qtbot.addWidget(mainWindow)
+
+    assert isinstance(mainWindow.tabs, FullWidthTabWidget)
+    for view in (*mainWindow.analysisViews, *mainWindow.thesisViews):
+        assert isinstance(view.detailTabs, PageTabWidget)
 
 
 def testF5RunsAThesisProgram(qtbot) -> None:
@@ -159,6 +173,30 @@ def testChoosingDarkAppliesAndRemembersIt(qtbot, observableColorScheme) -> None:
         assert themeService.currentColorScheme() == Qt.ColorScheme.Dark
 
 
+def testSwitchingThemeReachesTheInputTab(qtbot, observableColorScheme) -> None:
+    """The bug: from dark, Help > Theme > Light left the whole Input tab dark.
+
+    Its own style sheet stopped it taking palette changes. The program tabs'
+    style is rebuilt on every palette change, which hands the new palette down
+    to every page. Only a real scheme change shows it, so this skips on the
+    offscreen plugin.
+    """
+    if not observableColorScheme:
+        pytest.skip("this platform plugin does not report a forced colour scheme")
+    themeService.applyTheme(themeService.darkTheme)
+    mainWindow = MainWindow()
+    qtbot.addWidget(mainWindow)
+    mainWindow.show()
+    qtbot.wait(100)
+    edit = mainWindow.inputView.edits["amplitude"]
+
+    mainWindow.themeActions[themeService.lightTheme].trigger()
+
+    light = QApplication.palette(edit).base().color()
+    assert light.lightnessF() > 0.5
+    qtbot.waitUntil(lambda: edit.palette().base().color() == light, timeout=3000)
+
+
 def testSavedThemeIsRestoredOnNextLaunch(qtbot) -> None:
     first = MainWindow()
     qtbot.addWidget(first)
@@ -174,7 +212,7 @@ def testAboutOpensTheDialogAndReportsADonation(qtbot, monkeypatch) -> None:
     """The About text itself is covered in testAboutDialog."""
     mainWindow = MainWindow()
     qtbot.addWidget(mainWindow)
-    monkeypatch.setattr("masterRebuild.ui.mainWindow.showAbout", lambda parent: True)
+    monkeypatch.setattr("strandSlip.ui.mainWindow.showAbout", lambda parent: True)
 
     mainWindow.onHelpAbout()
 
@@ -185,7 +223,7 @@ def openedUrls(monkeypatch) -> list[str]:
     """Collect what the app asked the desktop to open, and say it worked."""
     opened: list[str] = []
     monkeypatch.setattr(
-        "masterRebuild.ui.mainWindow.QDesktopServices.openUrl",
+        "strandSlip.ui.mainWindow.QDesktopServices.openUrl",
         lambda url: opened.append(url.toString()) or True,
     )
     return opened
@@ -243,7 +281,7 @@ def testAMissingManualLeavesTheReaderAnAddress(qtbot, monkeypatch, tmp_path) -> 
     openedUrls(monkeypatch)
     shown: list[str] = []
     monkeypatch.setattr(
-        "masterRebuild.ui.mainWindow.QMessageBox.information",
+        "strandSlip.ui.mainWindow.QMessageBox.information",
         lambda parent, title, text: shown.append(text),
     )
 

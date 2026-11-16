@@ -18,5 +18,5 @@ The executables are 16-bit DOS programs (Microsoft FORTRAN, judging by the `$DEB
 `$NOFLOATCALLS` and `$STORAGE:2` metacommands). 64-bit Windows cannot run them; DOSBox can.
 Each reads `ENTRE.DAT` from the current folder and stops if its output files already exist.
 
-The Python port is in `src/masterRebuild/services/`; [`docs/legacyPort.md`](../../docs/legacyPort.md)
+The Python port is in `src/strandSlip/services/`; [`docs/legacyPort.md`](../../docs/legacyPort.md)
 maps every equation and quirk to its new home.

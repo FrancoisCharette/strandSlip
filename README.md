@@ -1,4 +1,4 @@
-# Master Rebuild
+# Strand Slip
 
 The Fortran programs of the master's project on strands (wires wound on a core) at Université
 Laval for Hydro-Québec / IREQ, revived as one PySide6 desktop app:
@@ -12,7 +12,7 @@ Both kinds work for a sinusoidal deflection or a constant radius of curvature.
 
 | 1990 program | What it did | Where it lives now |
 |---|---|---|
-| `ENTRE.FOR` | Asked 15 questions, wrote `ENTRE.DAT` | **Input** tab |
+| `ENTRE.FOR` | Asked 15 questions, wrote `ENTRE.DAT` | **Input** tab, which also draws the strand: the span between two posts, and its section |
 | `SINUS.FOR` | Strand stiffness, sinusoidal deflection | **Sinusoid** tab |
 | `BSINUS.FOR` | Same equations, read as a cable of strands | **Sinusoid** tab |
 | `NSINUS.FOR` | BSINUS with a 10× finer slip search and a slip-zone listing | **Sinusoid** tab |
@@ -66,7 +66,7 @@ on the 1992 diskettes.
 ## One-time setup
 
 ```powershell
-cd W:\projects\26masterRebuild
+cd W:\projects\26strandSlip
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -e ".[dev]"
@@ -75,12 +75,12 @@ pip install -e ".[dev]"
 ## Daily workflow
 
 ```powershell
-cd W:\projects\26masterRebuild
+cd W:\projects\26strandSlip
 .\.venv\Scripts\Activate.ps1
-master-rebuild
+strand-slip
 ```
 
-Or `python -m masterRebuild.main`, or double-click **`runApp.cmd`**. The user manual is under
+Or `python -m strandSlip.main`, or double-click **`runApp.cmd`**. The user manual is under
 **Help > User Manual** (F1), from [`docs/manual/README.md`](docs/manual/README.md).
 
 ## Tests and lint
@@ -90,15 +90,28 @@ pytest
 ruff check src tests
 ```
 
+## App icon
+
+The icon is the section of a strand, a steel core ringed by aluminium wires, with one wire in
+coral, the one that slips, and an arrow beside it. It is drawn in code, like Wager Book's:
+`tools/makeIcons.py` paints it separately at each size from 16 to 256 px, with fewer wires as it
+shrinks, and packs them into `src/strandSlip/resources/strandSlip.ico`. Startup sets it on every
+window and gives the app its own Windows taskbar ID, so a window started by `pythonw.exe` is not
+filed under Python. To redraw it after changing the design:
+
+```powershell
+python tools/makeIcons.py
+```
+
 ## Structure
 
 | Layer | Folder | Purpose |
 |-------|--------|---------|
-| Entry | `src/masterRebuild/main.py` | Start `QApplication`, show main window |
-| Config | `src/masterRebuild/appConfig.py` | Paths, defaults, app metadata |
-| UI | `src/masterRebuild/ui/` | `mainWindow.py`; `views/` (Input tab, one reusable analysis tab, one thesis tab per deflection); `plotting/` (matplotlib charts); `widgets/` |
-| Services | `src/masterRebuild/services/` | The port itself, no Qt widgets |
-| Models | `src/masterRebuild/models/` | `StrandInput` (ENTRE.DAT), `ThesisInput` (the 1992 keyboard answers), the program catalogues, result types, examples |
+| Entry | `src/strandSlip/main.py` | Start `QApplication`, show main window |
+| Config | `src/strandSlip/appConfig.py` | Paths, defaults, app metadata |
+| UI | `src/strandSlip/ui/` | `mainWindow.py`; `views/` (Input tab with its Numerical Entries and Schematics pages, one reusable analysis tab, one thesis tab per deflection); `plotting/` (matplotlib charts); `widgets/` (among them the program tabs and the tabs inside a page, which mark the open tab as Wager Book and The One Assets do: `tabStyling.py`) |
+| Services | `src/strandSlip/services/` | The port itself, no Qt widgets |
+| Models | `src/strandSlip/models/` | `StrandInput` (ENTRE.DAT), `ThesisInput` (the 1992 keyboard answers), the program catalogues, result types, examples |
 | Tools | `tools/` | `recoverManuel1992.py`: the 1992 listings from the WordPerfect manual |
 
 The services, in the order a run uses them:
@@ -112,6 +125,7 @@ The services, in the order a run uses them:
 | `stiffnessService`, `frictionService`, `displacementService` | The six analysis programs |
 | `fortranFormat`, `legacyOutputService` | Fortran edit descriptors and the legacy files |
 | `analysisRunner`, `analysisWorker` | Run a program off the interface thread |
+| `strandGeometry` | What the Input tab's schematics draw: the span between two posts, and the section |
 
 And for the 1992 programs:
 

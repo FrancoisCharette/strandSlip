@@ -1,5 +1,5 @@
 [project]
-name = "master-rebuild"
+name = "strand-slip"
 version = "0.1.0"
 description = "Revival of the 1990 Fortran strand-stiffness programs (SINUS, BSINUS, NSINUS, RAYON, FRICTION, DEPLACE, ENTRE) and the six 1992 thesis programs (HARDRHOB, CONTRHOB, ZETARHOB, HARDSIN, CONTSIN, ZETASIN) as a PySide6 desktop app"
 requires-python = ">=3.14"
@@ -17,7 +17,7 @@ dev = [
 ]
 
 [project.scripts]
-master-rebuild = "masterRebuild.main:main"
+strand-slip = "strandSlip.main:main"
 
 [tool.pytest.ini_options]
 pythonpath = ["src", "tests"]
@@ -25,6 +25,10 @@ testpaths = ["tests"]
 qt_api = "pyside6"
 python_files = ["test*.py"]
 python_functions = ["test*"]
+filterwarnings = [
+    # matplotlib's Qt toolbar asks for a Qt attribute PySide6 deprecates, once it is on screen.
+    "ignore:Enum value .*AA_UseHighDpiPixmaps:DeprecationWarning",
+]
 
 [tool.ruff]
 line-length = 100
@@ -34,7 +38,7 @@ target-version = "py314"
 select = ["E", "F", "I", "UP"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["masterRebuild", "legacyReference", "listingReader"]
+known-first-party = ["strandSlip", "legacyReference", "listingReader"]
 
 [tool.ruff.lint.per-file-ignores]
 # The transcriptions keep the Fortran names (I, X1...) and expressions whole,
@@ -46,4 +50,4 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/masterRebuild"]
+packages = ["src/strandSlip"]

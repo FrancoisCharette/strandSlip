@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from PySide6.QtWidgets import QDialog
 
-from masterRebuild import appConfig
-from masterRebuild.ui.dialogs.aboutDialog import AboutDialog, aboutHtml, showAbout
+from strandSlip import appConfig
+from strandSlip.ui.dialogs.aboutDialog import AboutDialog, aboutHtml, showAbout
 
 
 def testAboutTextCarriesTheCredits() -> None:
@@ -59,7 +59,7 @@ def testEnterCannotOpenThePaymentPage(qtbot) -> None:
 def testShowAboutReportsWhetherItOpenedTheDonationPage(qtbot, monkeypatch) -> None:
     opened: list[str] = []
     monkeypatch.setattr(
-        "masterRebuild.ui.dialogs.aboutDialog.QDesktopServices.openUrl",
+        "strandSlip.ui.dialogs.aboutDialog.QDesktopServices.openUrl",
         lambda url: opened.append(url.toString()) or True,
     )
 

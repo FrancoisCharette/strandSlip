@@ -8,10 +8,10 @@ import numpy as np
 import pytest
 
 from legacyReference import literalPrograms
-from masterRebuild.models.strandPresets import reportStrandSinusoid
-from masterRebuild.services.analysisErrors import InputError
-from masterRebuild.services.displacementService import runDisplacement
-from masterRebuild.services.frictionService import runFriction
+from strandSlip.models.strandPresets import reportStrandSinusoid
+from strandSlip.services.analysisErrors import InputError
+from strandSlip.services.displacementService import runDisplacement
+from strandSlip.services.frictionService import runFriction
 
 example = reportStrandSinusoid.input
 cases = [

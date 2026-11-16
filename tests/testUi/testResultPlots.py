@@ -7,13 +7,13 @@ from dataclasses import replace
 import pytest
 from matplotlib.figure import Figure
 
-from masterRebuild.models.legacyProgram import RAYON, SINUS
-from masterRebuild.models.strandPresets import reportStrandCurvature, reportStrandSinusoid
-from masterRebuild.services.displacementService import runDisplacement
-from masterRebuild.services.frictionService import runFriction
-from masterRebuild.services.stiffnessService import runStiffness
-from masterRebuild.ui.plotting.chartStyle import darkTheme, lightTheme
-from masterRebuild.ui.plotting.resultPlots import choicesFor, drawResult
+from strandSlip.models.legacyProgram import RAYON, SINUS
+from strandSlip.models.strandPresets import reportStrandCurvature, reportStrandSinusoid
+from strandSlip.services.displacementService import runDisplacement
+from strandSlip.services.frictionService import runFriction
+from strandSlip.services.stiffnessService import runStiffness
+from strandSlip.ui.plotting.chartStyle import darkTheme, lightTheme
+from strandSlip.ui.plotting.resultPlots import choicesFor, drawResult
 
 example = replace(reportStrandSinusoid.input, xEnd=3.0)
 results = {

@@ -1,10 +1,11 @@
-"""Tests for the full-width tab widget."""
+"""Tests for the full-width tab widget; how it marks the open tab is in testTabMarking."""
 
 from __future__ import annotations
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget
 
-from masterRebuild.ui.widgets.fullWidthTabWidget import FullWidthTabWidget
+from strandSlip.ui.widgets.fullWidthTabWidget import FullWidthTabWidget
 
 
 def tabsFillHalves(tabWidget: FullWidthTabWidget) -> bool:
@@ -56,6 +57,37 @@ def testALongLabelGetsTheRoomItNeeds(qtbot) -> None:
         return widths[2] > widths[0] and sum(widths) >= tabWidget.width() - tabBar.count()
 
     qtbot.waitUntil(longIsWidest, timeout=5000)
+
+
+def testTheWidthsHoldStillWhenAnotherTabIsOpened(qtbot) -> None:
+    """The open tab's label is bold; each label is measured that way whichever is open.
+
+    Measured as drawn, the bold label would take room from its neighbours and
+    every tab would shift each time another was opened.
+    """
+    tabWidget = FullWidthTabWidget()
+    qtbot.addWidget(tabWidget)
+    for title in ("A", "B", "Sinusoid · SINUS BSINUS NSINUS and a few more words"):
+        tabWidget.addTab(QWidget(), title)
+    tabWidget.resize(420, 300)
+    tabWidget.show()
+    tabBar = tabWidget.tabBar()
+    qtbot.waitUntil(lambda: tabBar.tabRect(2).width() > tabBar.tabRect(0).width(), timeout=5000)
+    widths = [tabBar.tabRect(i).width() for i in range(tabBar.count())]
+
+    for index in (2, 1, 0):
+        tabWidget.setCurrentIndex(index)
+        qtbot.wait(20)
+        assert [tabBar.tabRect(i).width() for i in range(tabBar.count())] == widths
+
+
+def testALabelTooLongForItsTabEndsInAnEllipsis(qtbot) -> None:
+    """Rather than being cut at both ends; elided in bold, so the open tab's fits."""
+    tabWidget = FullWidthTabWidget()
+    qtbot.addWidget(tabWidget)
+
+    assert tabWidget.tabBar().elideMode() == Qt.TextElideMode.ElideRight
+    assert tabWidget.tabBar().font().bold()
 
 
 def testThreeTabsShareThirds(qtbot) -> None:

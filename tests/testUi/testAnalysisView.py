@@ -6,10 +6,10 @@ from dataclasses import replace
 
 import pytest
 
-from masterRebuild.models.legacyProgram import BSINUS, DEPLACE, FRICTION, NSINUS, RAYON, SINUS
-from masterRebuild.models.strandPresets import reportStrandCurvature, reportStrandSinusoid
-from masterRebuild.services.analysisErrors import InputError
-from masterRebuild.ui.views.analysisView import AnalysisView
+from strandSlip.models.legacyProgram import BSINUS, DEPLACE, FRICTION, NSINUS, RAYON, SINUS
+from strandSlip.models.strandPresets import reportStrandCurvature, reportStrandSinusoid
+from strandSlip.services.analysisErrors import InputError
+from strandSlip.ui.views.analysisView import AnalysisView
 
 example = reportStrandSinusoid.input
 

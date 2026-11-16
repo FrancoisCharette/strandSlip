@@ -8,11 +8,11 @@ import numpy as np
 import pytest
 
 from legacyReference import literalPrograms
-from masterRebuild.models.analysisResults import slipAbove, slipBelow, stuck
-from masterRebuild.models.legacyProgram import BSINUS, NSINUS, RAYON, SINUS
-from masterRebuild.models.strandPresets import reportStrandCurvature, reportStrandSinusoid
-from masterRebuild.services.analysisErrors import AnalysisCancelled, InputError, ProgressHook
-from masterRebuild.services.stiffnessService import runStiffness
+from strandSlip.models.analysisResults import slipAbove, slipBelow, stuck
+from strandSlip.models.legacyProgram import BSINUS, NSINUS, RAYON, SINUS
+from strandSlip.models.strandPresets import reportStrandCurvature, reportStrandSinusoid
+from strandSlip.services.analysisErrors import AnalysisCancelled, InputError, ProgressHook
+from strandSlip.services.stiffnessService import runStiffness
 
 example = reportStrandSinusoid.input
 

@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from masterRebuild.models.legacyProgram import SINUS
-from masterRebuild.models.strandPresets import reportStrandSinusoid
-from masterRebuild.services.analysisErrors import AnalysisCancelled, InputError
-from masterRebuild.services.analysisWorker import AnalysisWorker
-from masterRebuild.services.stiffnessService import runStiffness
+from strandSlip.models.legacyProgram import SINUS
+from strandSlip.models.strandPresets import reportStrandSinusoid
+from strandSlip.services.analysisErrors import AnalysisCancelled, InputError
+from strandSlip.services.analysisWorker import AnalysisWorker
+from strandSlip.services.stiffnessService import runStiffness
 
 
 def testSuccessCarriesTheResult(qtbot) -> None:
